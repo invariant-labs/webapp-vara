@@ -1,6 +1,6 @@
 import { nightlyConnectAdapter } from './selector'
 
-export const getAlephZeroWallet = async () => {
+export const getVaraWallet = async () => {
   const adapter = await nightlyConnectAdapter()
 
   return adapter

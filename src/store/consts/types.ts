@@ -79,5 +79,3 @@ export enum Chain {
   AlephZero = 'Aleph Zero',
   Eclipse = 'Eclipse'
 }
-
-export type Address = `0x${string}`

@@ -14,9 +14,10 @@ import classNames from 'classnames'
 import React, { useCallback, useEffect, useState } from 'react'
 import FeeSwitch from '../FeeSwitch/FeeSwitch'
 import { useStyles } from './style'
-import { Address, PositionOpeningMethod } from '@store/consts/types'
+import { PositionOpeningMethod } from '@store/consts/types'
 import { SwapToken } from '@store/selectors/wallet'
 import { TooltipHover } from '@components/TooltipHover/TooltipHover'
+import { HexString } from '@gear-js/api'
 export interface InputState {
   value: string
   setValue: (value: string) => void
@@ -31,8 +32,8 @@ export interface IDepositSelector {
   initialFee: string
   tokens: Record<string, SwapToken>
   setPositionTokens: (
-    tokenAAddress: Address | null,
-    tokenBAddress: Address | null,
+    tokenAAddress: HexString | null,
+    tokenBAddress: HexString | null,
     feeTierIndex: number
   ) => void
   onAddLiquidity: () => void

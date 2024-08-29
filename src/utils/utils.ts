@@ -1,4 +1,5 @@
 import {
+  FungibleToken,
   Invariant,
   LiquidityTick,
   PoolKey,
@@ -23,10 +24,11 @@ import {
   TESTNET_USDC_ADDRESS
 } from '@invariant-labs/vara-sdk/target/consts'
 import {
+  ActorId,
   calculateLiquidityBreakpoints,
+  HexString,
   priceToSqrtPrice
 } from '@invariant-labs/vara-sdk/target/utils'
-import { Keyring } from '@polkadot/api'
 import { PoolWithPoolKey } from '@store/reducers/pools'
 import { PlotTickData } from '@store/reducers/positions'
 import axios from 'axios'
@@ -36,7 +38,6 @@ import {
   DEFAULT_TOKENS,
   ETH,
   ErrorMessage,
-  FAUCET_DEPLOYER_MNEMONIC,
   FormatConfig,
   LIQUIDITY_PLOT_DECIMAL,
   Network,
@@ -356,7 +357,28 @@ export const parseFeeToPathFee = (fee: bigint): string => {
 
 export const getTokenDataByAddresses = async () => {}
 
-export const getTokenBalances = async (): Promise<any> => {}
+export const getTokenBalances = async (
+  tokens: HexString[],
+  grc20: FungibleToken,
+  address: ActorId
+): Promise<[string, bigint][]> => {
+  // const keyring = await GearKeyring.fromSeed(address, 'walletAddress')
+  // console.log(keyring.addressRaw)
+
+  const promises: Promise<bigint>[] = []
+  tokens.map(token => {
+    promises.push(grc20.balanceOf(address, token))
+  })
+
+  console.log('promises')
+  const results = await Promise.all(promises)
+  console.log('results' + results)
+  const tokenBalances: [string, bigint][] = []
+  tokens.map((token, index) => {
+    tokenBalances.push([token, results[index]])
+  })
+  return tokenBalances
+}
 
 export const getPoolsByPoolKeys = async (
   invariant: Invariant,
@@ -960,11 +982,6 @@ export const ensureError = (value: unknown): Error => {
 
   const error = new Error(stringified)
   return error
-}
-
-export const getFaucetDeployer = () => {
-  const keyring = new Keyring({ type: 'sr25519' })
-  return keyring.addFromUri(FAUCET_DEPLOYER_MNEMONIC)
 }
 
 export function testnetBestTiersCreator() {

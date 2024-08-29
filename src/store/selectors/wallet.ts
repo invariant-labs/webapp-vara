@@ -3,6 +3,7 @@ import { createSelector } from '@reduxjs/toolkit'
 import { IAlephZeroWallet, ITokenBalance, walletSliceName } from '@store/reducers/wallet'
 import { AnyProps, keySelectors } from './helpers'
 import { tokens } from './pools'
+import { decodeAddress, HexString } from '@gear-js/api'
 
 const store = (s: AnyProps) => s[walletSliceName] as IAlephZeroWallet
 
@@ -85,6 +86,11 @@ export const swapTokensDict = createSelector(
   }
 )
 
+export const hexAddress = createSelector(
+  address,
+  (addressString: string): HexString => decodeAddress(addressString)
+)
+
 export type TokenBalances = ITokenBalance & {
   symbol: string
   usdValue: BN
@@ -93,6 +99,7 @@ export type TokenBalances = ITokenBalance & {
 
 export const alephZeroWalletSelectors = {
   address,
+  hexAddress,
   balance,
   tokensBalances,
   status,

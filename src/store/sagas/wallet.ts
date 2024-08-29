@@ -4,8 +4,8 @@ import { actions as positionsActions } from '@store/reducers/positions'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { Status, actions } from '@store/reducers/wallet'
 import { tokens } from '@store/selectors/pools'
-import { status } from '@store/selectors/wallet'
-import { disconnectWallet, getAlephZeroWallet } from '@utils/web3/wallet'
+import { address, balance, hexAddress, status } from '@store/selectors/wallet'
+import { disconnectWallet, getVaraWallet } from '@utils/web3/wallet'
 import {
   SagaGenerator,
   all,
@@ -17,11 +17,21 @@ import {
   takeLeading
 } from 'typed-redux-saga'
 import { positionsList } from '@store/selectors/positions'
-import { getApi } from './connection'
+import { getApi, getGRC20 } from './connection'
 import { openWalletSelectorModal } from '@utils/web3/selector'
+import { createLoaderKey, getTokenBalances } from '@utils/utils'
+import { GearKeyring, HexString } from '@gear-js/api'
+import {
+  FAUCET_DEPLOYER_MNEMONIC,
+  FAUCET_SAFE_TRANSACTION_FEE,
+  FaucetTokenList,
+  TokenAirdropAmount
+} from '@store/consts/static'
+import { closeSnackbar } from 'notistack'
+import { batchTxs } from '@invariant-labs/vara-sdk'
 
 export function* getWallet(): SagaGenerator<NightlyConnectAdapter> {
-  const wallet = yield* call(getAlephZeroWallet)
+  const wallet = yield* call(getVaraWallet)
   return wallet
 }
 
@@ -49,7 +59,108 @@ export function* getBalance(walletAddress: string): SagaGenerator<string> {
   return accountInfo.data.free
 }
 
-export function* handleAirdrop(): Generator {}
+export function* handleAirdrop(): Generator {
+  const walletAddress = yield* select(hexAddress)
+  const walletBalance = yield* select(balance)
+
+  if (!walletAddress) {
+    return yield* put(
+      snackbarsActions.add({
+        message: 'Connect wallet to claim the faucet.',
+        variant: 'error',
+        persist: false
+      })
+    )
+  }
+  //TODO check sage transaction fee
+  console.log(FAUCET_SAFE_TRANSACTION_FEE)
+  if (FAUCET_SAFE_TRANSACTION_FEE > walletBalance) {
+    return yield* put(
+      snackbarsActions.add({
+        message: 'Insufficient TVARA balance.',
+        variant: 'error',
+        persist: false,
+        link: {
+          label: 'GET TVARA',
+          href: 'https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network'
+        }
+      })
+    )
+  }
+
+  const loaderAirdrop = createLoaderKey()
+  const loaderSigningTx = createLoaderKey()
+
+  try {
+    yield put(
+      snackbarsActions.add({
+        message: 'Airdrop in progress...',
+        variant: 'pending',
+        persist: true,
+        key: loaderAirdrop
+      })
+    )
+
+    const deployerAccount = yield* call(
+      [GearKeyring, GearKeyring.fromMnemonic],
+      FAUCET_DEPLOYER_MNEMONIC
+    )
+
+    const api = yield* getApi()
+    // const walletAdapter = yield* getWallet()
+    const grc20 = yield* getGRC20()
+
+    grc20.setAdmin(deployerAccount)
+    const txs = []
+
+    for (const ticker in FaucetTokenList) {
+      const address = FaucetTokenList[ticker as keyof typeof FaucetTokenList]
+      const airdropAmount = TokenAirdropAmount[ticker as keyof typeof FaucetTokenList]
+
+      const mintTx = yield* call([grc20, grc20.mintTx], walletAddress, airdropAmount, address)
+      txs.push(mintTx)
+
+      const approveTx = yield* call([grc20, grc20.approveTx], walletAddress, airdropAmount, address)
+      txs.push(approveTx)
+    }
+
+    yield put(
+      snackbarsActions.add({
+        message: 'Signing transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderSigningTx
+      })
+    )
+    yield* call(batchTxs, api, deployerAccount, txs)
+
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+
+    closeSnackbar(loaderAirdrop)
+    yield put(snackbarsActions.remove(loaderAirdrop))
+
+    const tokenNames = Object.keys(FaucetTokenList).join(', ')
+
+    yield* put(
+      snackbarsActions.add({
+        message: `Airdropped ${tokenNames} tokens`,
+        variant: 'success',
+        persist: false
+        // txid: hash
+      })
+    )
+
+    yield* call(fetchBalances, [...Object.values(FaucetTokenList)])
+  } catch (error) {
+    console.log(error)
+
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+    closeSnackbar(loaderAirdrop)
+    yield put(snackbarsActions.remove(loaderAirdrop))
+  }
+}
 
 export function* init(isEagerConnect: boolean): Generator {
   try {
@@ -80,7 +191,9 @@ export function* init(isEagerConnect: boolean): Generator {
     yield* put(actions.setAddress(accounts[0].address))
 
     const allTokens = yield* select(tokens)
-    yield* call(fetchBalances, Object.keys(allTokens))
+    const tokensList = Object.keys(allTokens) as HexString[]
+
+    yield* call(fetchBalances, tokensList)
 
     yield* put(actions.setStatus(Status.Initialized))
   } catch (error) {
@@ -141,8 +254,32 @@ export function* handleDisconnect(): Generator {
     console.log(error)
   }
 }
+export function* fetchBalances(tokens: HexString[]): Generator {
+  const stringAddress = yield* select(address)
+  const walletAddress = yield* select(hexAddress)
+  const grc20 = yield* getGRC20()
 
-export function* fetchBalances(): Generator {}
+  yield* put(actions.setIsBalanceLoading(true))
+
+  const balance = yield* call(getBalance, stringAddress)
+  yield* put(actions.setBalance(BigInt(balance)))
+
+  const tokenBalances = yield* call(getTokenBalances, tokens, grc20, walletAddress)
+
+  if (tokenBalances.length !== 0) {
+    yield* put(
+      actions.addTokenBalances(
+        tokenBalances.map(([address, balance]) => {
+          return {
+            address,
+            balance
+          }
+        })
+      )
+    )
+  }
+  yield* put(actions.setIsBalanceLoading(false))
+}
 
 export function* handleReconnect(): Generator {
   yield* call(handleDisconnect)
@@ -150,7 +287,7 @@ export function* handleReconnect(): Generator {
   yield* call(handleConnect, { type: actions.connect.type, payload: false })
 }
 
-export function* handleGetBalances(action: PayloadAction<string[]>): Generator {
+export function* handleGetBalances(action: PayloadAction<HexString[]>): Generator {
   yield* call(fetchBalances, action.payload)
 }
 

@@ -6,7 +6,7 @@ import { Status, actions as walletActions } from '@store/reducers/wallet'
 import { networkType, rpcAddress } from '@store/selectors/connection'
 import { address, status } from '@store/selectors/wallet'
 import { openWalletSelectorModal } from '@utils/web3/selector'
-import { getAlephZeroWallet } from '@utils/web3/wallet'
+import { getVaraWallet } from '@utils/web3/wallet'
 import React, { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
@@ -23,7 +23,7 @@ export const HeaderWrapper: React.FC = () => {
 
   useEffect(() => {
     const fetchWallet = async () => {
-      const wallet = await getAlephZeroWallet()
+      const wallet = await getVaraWallet()
 
       await wallet.canEagerConnect().then(
         async canEagerConnect => {
