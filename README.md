@@ -1,64 +1,51 @@
-# 🌟 Vara Web3 Template 🌟
+<div align="center">
 
-Elevate your Vara blockchain development experience with this robust template powered by Next.js and integrated with [Nightly Connect](https://connect.nightly.app/docs/) for seamless wallet management. This template provides you with the core building blocks to jump-start your Vara project!
+    <h1>⚡Invariant webapp⚡</h1>
+    <p>
+        | <a href="https://docs.invariant.app/docs/vara">DOCS 📚</a> |
+        <a href="https://invariant.app/math-spec-a0.pdf">MATH SPEC 📄</a> |
+        <a href="https://discord.gg/VzS3C9wR">DISCORD 🌐</a> |
+    </p>
 
-![Discord](https://img.shields.io/discord/7nhFHA6yZq?color=7389D8&logo=discord&logoColor=ffffff)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)
+</div>
 
----
+Invariant protocol is an AMM built on [Vara](https://vara.network), leveraging high capital efficiency and the ability to list markets in a permissionless manner. At the core of the DEX is the Concentrated Liquidity mechanism, designed to handle tokens compatible with the [GRC20 standard](https://github.com/w3f/PSPs/blob/master/PSPs/psp-22.md). The protocol is structured around a single contract architecture.
 
-## 🚀 Quick Start
+## 🔨 Getting Started
 
-Getting up and running is as easy as 1-2-3!
+### Prerequisites
+
+- Node & NPM ([Node.js](https://nodejs.org/))
+
+#### Node & NPM (with NVM)
 
 ```bash
-# Clone the repo
-git clone https://github.com/nightly-labs/vara-web3-template.git
-
-# Navigate to project directory
-cd vara-web3-template
-
-# Install dependencies
-npm/yarn/pnpm/bun install
-
-# Start development server
-npm/yarn/pnpm/bun install
-
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+nvm install 20
 ```
 
-Now, open your browser and navigate to [http://localhost:3000](http://localhost:3000) to see your blazing fast Vara app in action!
+### Build protocol
 
----
+- Clone repository
 
-## 🎨 Features
+```bash
+git clone git@github.com:invariant-labs/webapp-vara.git
+```
 
-- 🛠 **Next.js Framework**: Build your dApp using the versatile and powerful Next.js.
-- 🎨 **Tailwind**: A best-in-class CSS framework that turns styling into an art.
-- 🔐 **Nightly Connect Integration**: Seamless wallet selection integrated for easy transactions.
-- 📋 **Prebuilt Flows**: This template comes with prebuilt flows for wallet connection and sample requests.
-- 🤝 **Community Support**: Have questions? Join our [Discord community](https://discord.com/invite/7nhFHA6yZq).
+- Install dependencies
 
----
+```bash
+npm i
+```
 
-## 🖖 Contribute
+- Build app
 
-Feel free to fork this repository and submit pull requests. To clone the repository and set up the development environment, you can follow the [Quick Start](#-quick-start) guide.
+```bash
+npm run build
+```
 
----
+- Run on local server
 
-## 📬 Get in Touch
-
-If you have questions or just want to chat with developers, [join our Discord community](https://discord.com/invite/7nhFHA6yZq).
-
----
-
-## 🎉 Have Fun and Happy Coding!
-
-Use this template to build something incredible! Enjoy coding!
-
-## 🙏 Credits
-
-This project wouldn't be possible without the help and contributions of:
-
-- [router-transitions](https://codesandbox.io/s/router-transitions-7kohn) for awesome 3d animation.
+```bash
+npm run dev
+```
