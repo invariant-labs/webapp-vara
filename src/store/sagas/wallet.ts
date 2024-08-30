@@ -60,10 +60,9 @@ export function* getBalance(walletAddress: string): SagaGenerator<string> {
 }
 
 export function* handleAirdrop(): Generator {
-  const walletAddress = yield* select(hexAddress)
-  const walletBalance = yield* select(balance)
+  const stringAddress = yield* select(address)
 
-  if (!walletAddress) {
+  if (!stringAddress) {
     return yield* put(
       snackbarsActions.add({
         message: 'Connect wallet to claim the faucet.',
@@ -72,6 +71,9 @@ export function* handleAirdrop(): Generator {
       })
     )
   }
+  const walletAddress = yield* select(hexAddress)
+  const walletBalance = yield* select(balance)
+
   //TODO check sage transaction fee
   console.log(FAUCET_SAFE_TRANSACTION_FEE)
   if (FAUCET_SAFE_TRANSACTION_FEE > walletBalance) {
@@ -119,9 +121,6 @@ export function* handleAirdrop(): Generator {
 
       const mintTx = yield* call([grc20, grc20.mintTx], walletAddress, airdropAmount, address)
       txs.push(mintTx)
-
-      const approveTx = yield* call([grc20, grc20.approveTx], walletAddress, airdropAmount, address)
-      txs.push(approveTx)
     }
 
     yield put(
@@ -189,12 +188,12 @@ export function* init(isEagerConnect: boolean): Generator {
     }
 
     yield* put(actions.setAddress(accounts[0].address))
-
+    console.log('1')
     const allTokens = yield* select(tokens)
     const tokensList = Object.keys(allTokens) as HexString[]
-
+    console.log('2')
     yield* call(fetchBalances, tokensList)
-
+    console.log('initialized')
     yield* put(actions.setStatus(Status.Initialized))
   } catch (error) {
     console.log(error)

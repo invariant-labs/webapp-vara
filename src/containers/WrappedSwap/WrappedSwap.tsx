@@ -189,7 +189,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       return
     }
 
-    dispatch(walletActions.getBalances([tokenFromAddress, tokenToAddress]))
+    // dispatch(walletActions.getBalances([tokenFromAddress, tokenToAddress]))
 
     // dispatch(
     //   poolsActions.getAllPoolsForPairData({

@@ -3,7 +3,6 @@ import { defineConfig } from 'vite'
 import topLevelAwait from 'vite-plugin-top-level-await'
 import wasm from 'vite-plugin-wasm'
 import { compression } from 'vite-plugin-compression2'
-import path from 'path'
 
 export default defineConfig({
   plugins: [react(), topLevelAwait(), wasm(), compression()],
