@@ -7,18 +7,19 @@ import { Button } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import SelectTokenModal from '@components/Modals/SelectModals/SelectTokenModal/SelectTokenModal'
 import { SwapToken } from '@store/selectors/wallet'
+import { HexString } from '@gear-js/api'
 
 export interface ISelectModal {
   name?: string
   current: SwapToken | null
   centered?: boolean
   tokens: Record<string, SwapToken>
-  onSelect: (address: string) => void
+  onSelect: (address: HexString) => void
   className?: string
   hideBalancesInModal?: boolean
   handleAddToken: (address: string) => void
   sliceName?: boolean
-  commonTokens: string[]
+  commonTokens: HexString[]
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void
   hiddenUnknownTokens: boolean

@@ -1,5 +1,6 @@
 import {
   FEE_TIERS,
+  HexString,
   Position,
   TESTNET_BTC_ADDRESS,
   TESTNET_ETH_ADDRESS,
@@ -105,7 +106,7 @@ export const bestTiers: Record<Network, BestTier[]> = {
   [Network.Local]: []
 }
 
-export const commonTokensForNetworks: Record<Network, string[]> = {
+export const commonTokensForNetworks: Record<Network, HexString[]> = {
   [Network.Testnet]: [BTC.address, ETH.address, USDC.address],
   [Network.Mainnet]: [],
   [Network.Local]: []

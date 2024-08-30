@@ -1,19 +1,35 @@
 import { PayloadAction } from '@reduxjs/toolkit'
-
 import {
   createLiquidityPlot,
+  createLoaderKey,
   createPlaceholderLiquidityPlot,
   deserializeTickmap,
+  ensureError,
   getLiquidityTicksByPositionsList,
+  isErrorMessage,
   poolKeyToString
 } from '@utils/utils'
 import { FetchTicksAndTickMaps, actions as poolsActions } from '@store/reducers/pools'
-import { GetCurrentTicksData, GetPositionTicks, actions } from '@store/reducers/positions'
+import { actions as walletActions } from '@store/reducers/wallet'
+import {
+  GetCurrentTicksData,
+  GetPositionTicks,
+  InitPositionData,
+  actions
+} from '@store/reducers/positions'
 import { poolsArraySortedByFees, tickMaps, tokens } from '@store/selectors/pools'
 import { all, call, fork, join, put, select, spawn, takeEvery, takeLatest } from 'typed-redux-saga'
 import { fetchTicksAndTickMaps } from './pools'
 import { positionsList } from '@store/selectors/positions'
-import { getInvariant } from './connection'
+import { getApi, getGRC20, getInvariant } from './connection'
+import { actions as snackbarsActions } from '@store/reducers/snackbars'
+import { invariantAddress } from '@store/selectors/connection'
+import { address, balance, hexAddress } from '@store/selectors/wallet'
+import { getVaraWallet } from '@utils/web3/wallet'
+import { batchTxs, calculateTokenAmountsWithSlippage } from '@invariant-labs/vara-sdk/target/utils'
+import { FAUCET_DEPLOYER_MNEMONIC } from '@store/consts/static'
+import { closeSnackbar } from 'notistack'
+import { GearKeyring } from '@gear-js/api'
 
 // export function getWithdrawAllWAZEROTxs(
 //   invariant: Invariant,
@@ -35,150 +51,162 @@ import { getInvariant } from './connection'
 //   return txs
 // }
 
-function* handleInitPosition() {
-  // const {
-  //   poolKeyData,
-  //   lowerTick,
-  //   upperTick,
-  //   spotSqrtPrice,
-  //   tokenXAmount,
-  //   tokenYAmount,
-  //   liquidityDelta,
-  //   initPool,
-  //   slippageTolerance
-  // } = action.payload
-  // const { tokenX, tokenY, feeTier } = poolKeyData
-  // const loaderCreatePosition = createLoaderKey()
-  // const loaderSigningTx = createLoaderKey()
-  // try {
-  //   yield put(
-  //     snackbarsActions.add({
-  //       message: 'Creating position...',
-  //       variant: 'pending',
-  //       persist: true,
-  //       key: loaderCreatePosition
-  //     })
-  //   )
-  //   const walletAddress = yield* select(address)
-  //   const adapter = yield* call(getAlephZeroWallet)
-  //   const azeroBalance = yield* select(balance)
-  //   const invAddress = yield* select(invariantAddress)
-  //   const wazeroAddress = yield* select(wrappedAZEROAddress)
-  //   const api = yield* getApi()
-  //   const invariant = yield* getInvariant()
-  //   const psp22 = yield* getPSP22()
-  //   const wazero = yield* getWrappedAZERO()
-  //   let txs = []
-  //   const [xAmountWithSlippage, yAmountWithSlippage] = calculateTokenAmountsWithSlippage(
-  //     feeTier.tickSpacing,
-  //     spotSqrtPrice,
-  //     liquidityDelta,
-  //     lowerTick,
-  //     upperTick,
-  //     slippageTolerance,
-  //     true
-  //   )
-  //   if (
-  //     (tokenX === wazeroAddress && tokenXAmount !== 0n) ||
-  //     (tokenY === wazeroAddress && tokenYAmount !== 0n)
-  //   ) {
-  //     const isTokenX = tokenX === wazeroAddress
-  //     const slippageAmount = isTokenX ? xAmountWithSlippage : yAmountWithSlippage
-  //     const azeroAmount = azeroBalance > slippageAmount ? slippageAmount : azeroBalance
-  //     const depositTx = wazero.depositTx(azeroAmount, WAZERO_DEPOSIT_OPTIONS)
-  //     txs.push(depositTx)
-  //   }
-  //   const XTokenTx = psp22.approveTx(invAddress, xAmountWithSlippage, tokenX, PSP22_APPROVE_OPTIONS)
-  //   txs.push(XTokenTx)
-  //   const YTokenTx = psp22.approveTx(invAddress, yAmountWithSlippage, tokenY, PSP22_APPROVE_OPTIONS)
-  //   txs.push(YTokenTx)
-  //   if (initPool) {
-  //     const createPoolTx = invariant.createPoolTx(
-  //       poolKeyData,
-  //       spotSqrtPrice,
-  //       INVARIANT_CREATE_POOL_OPTIONS
-  //     )
-  //     txs.push(createPoolTx)
-  //   }
-  //   const tx = invariant.createPositionTx(
-  //     poolKeyData,
-  //     lowerTick,
-  //     upperTick,
-  //     liquidityDelta,
-  //     spotSqrtPrice,
-  //     slippageTolerance,
-  //     INVARIANT_CREATE_POSITION_OPTIONS
-  //   )
-  //   txs.push(tx)
-  //   if (
-  //     (tokenX === wazeroAddress && tokenXAmount !== 0n) ||
-  //     (tokenY === wazeroAddress && tokenYAmount !== 0n)
-  //   ) {
-  //     txs = [...txs, ...getWithdrawAllWAZEROTxs(invariant, psp22, invAddress, wazeroAddress)]
-  //   }
-  //   const batchedTx = api.tx.utility.batchAll(txs)
-  //   yield put(
-  //     snackbarsActions.add({
-  //       message: 'Signing transaction...',
-  //       variant: 'pending',
-  //       persist: true,
-  //       key: loaderSigningTx
-  //     })
-  //   )
-  //   let signedBatchedTx: SubmittableExtrinsic
-  //   try {
-  //     signedBatchedTx = yield* call([batchedTx, batchedTx.signAsync], walletAddress, {
-  //       signer: adapter.signer as Signer
-  //     })
-  //   } catch (e) {
-  //     throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
-  //   }
-  //   closeSnackbar(loaderSigningTx)
-  //   yield put(snackbarsActions.remove(loaderSigningTx))
-  //   const txResult = yield* call(sendTx, signedBatchedTx)
-  //   yield* put(actions.setInitPositionSuccess(true))
-  //   closeSnackbar(loaderCreatePosition)
-  //   yield put(snackbarsActions.remove(loaderCreatePosition))
-  //   yield put(
-  //     snackbarsActions.add({
-  //       message: 'Position created.',
-  //       variant: 'success',
-  //       persist: false,
-  //       txid: txResult.hash
-  //     })
-  //   )
-  //   yield put(walletActions.getBalances([tokenX, tokenY]))
-  //   const { length } = yield* select(positionsList)
-  //   const position = yield* call([invariant, invariant.getPosition], walletAddress, length)
-  //   yield* put(actions.addPosition(position))
-  //   yield* call(fetchBalances, [tokenX === wazeroAddress ? tokenY : tokenX])
-  //   yield* put(poolsActions.getPoolKeys())
-  // } catch (e: unknown) {
-  //   const error = ensureError(e)
-  //   console.log(error)
-  //   yield* put(actions.setInitPositionSuccess(false))
-  //   closeSnackbar(loaderCreatePosition)
-  //   yield put(snackbarsActions.remove(loaderCreatePosition))
-  //   closeSnackbar(loaderSigningTx)
-  //   yield put(snackbarsActions.remove(loaderSigningTx))
-  //   if (isErrorMessage(error.message)) {
-  //     yield put(
-  //       snackbarsActions.add({
-  //         message: error.message,
-  //         variant: 'error',
-  //         persist: false
-  //       })
-  //     )
-  //   } else {
-  //     yield put(
-  //       snackbarsActions.add({
-  //         message: 'Failed to create position. Please try again.',
-  //         variant: 'error',
-  //         persist: false
-  //       })
-  //     )
-  //   }
-  // }
+function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator {
+  const {
+    poolKeyData,
+    lowerTick,
+    upperTick,
+    spotSqrtPrice,
+    tokenXAmount,
+    tokenYAmount,
+    liquidityDelta,
+    initPool,
+    slippageTolerance
+  } = action.payload
+  const { tokenX, tokenY, feeTier } = poolKeyData
+  const loaderCreatePosition = createLoaderKey()
+  const loaderSigningTx = createLoaderKey()
+  console.log('poolKeyData', poolKeyData)
+
+  try {
+    yield put(
+      snackbarsActions.add({
+        message: 'Creating position...',
+        variant: 'pending',
+        persist: true,
+        key: loaderCreatePosition
+      })
+    )
+    const stringWalletAddress = yield* select(address)
+    const hexWalletAddress = yield* select(hexAddress)
+    const adapter = yield* call(getVaraWallet)
+    const azeroBalance = yield* select(balance)
+    const invAddress = yield* select(invariantAddress)
+    const grc20 = yield* getGRC20()
+    const api = yield* getApi()
+    const invariant = yield* getInvariant()
+    const deployerAccount = yield* call(
+      [GearKeyring, GearKeyring.fromMnemonic],
+      FAUCET_DEPLOYER_MNEMONIC
+    )
+    console.log('deployerAccount', deployerAccount)
+
+    const txs = []
+
+    console.log('tickSpacing :' + feeTier.tickSpacing)
+    console.log('spotSqrtPrice :' + spotSqrtPrice)
+    console.log('liquidityDelta :' + liquidityDelta)
+    console.log('lowerTick :' + lowerTick)
+    console.log('upperTick :' + upperTick)
+    console.log('slippageTolerance : ' + slippageTolerance)
+    console.log('initPool' + initPool)
+
+    //TODO fix error of calculateTokenAmountsWithSlippage
+    const [xAmountWithSlippage, yAmountWithSlippage] = calculateTokenAmountsWithSlippage(
+      feeTier.tickSpacing,
+      spotSqrtPrice,
+      liquidityDelta,
+      lowerTick,
+      upperTick,
+      slippageTolerance,
+      true
+    )
+    console.log('xAmountWithSlippage', xAmountWithSlippage)
+    const XTokenTx = yield* call([grc20, grc20.approveTx], invAddress, xAmountWithSlippage, tokenX)
+
+    txs.push(XTokenTx)
+    const YTokenTx = yield* call([grc20, grc20.approveTx], invAddress, yAmountWithSlippage, tokenY)
+    txs.push(YTokenTx)
+
+    if (initPool) {
+      const createPoolTx = yield* call(
+        [invariant, invariant.createPoolTx],
+        poolKeyData,
+        spotSqrtPrice
+      )
+      invariant.createPoolTx(poolKeyData, spotSqrtPrice)
+      txs.push(createPoolTx)
+    }
+
+    const tx = yield* call(
+      [invariant, invariant.createPositionTx],
+      poolKeyData,
+      lowerTick,
+      upperTick,
+      liquidityDelta,
+      spotSqrtPrice,
+      slippageTolerance
+    )
+
+    txs.push(tx)
+
+    yield* call(batchTxs, api, hexWalletAddress, txs)
+
+    yield put(
+      snackbarsActions.add({
+        message: 'Signing transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderSigningTx
+      })
+    )
+    // let signedBatchedTx: SubmittableExtrinsic
+    // try {
+    //   signedBatchedTx = yield* call([batchedTx, batchedTx.signAsync], hexWalletAddress, {
+    //     signer: adapter.signer as Signer
+    //   })
+    // } catch (e) {
+    //   throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    // }
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+
+    // const txResult = yield* call(sendTx, signedBatchedTx)
+
+    yield* put(actions.setInitPositionSuccess(true))
+    closeSnackbar(loaderCreatePosition)
+
+    yield put(snackbarsActions.remove(loaderCreatePosition))
+    yield put(
+      snackbarsActions.add({
+        message: 'Position created.',
+        variant: 'success',
+        persist: false
+        // txid: txResult.hash
+      })
+    )
+    yield put(walletActions.getBalances([tokenX, tokenY]))
+    const { length } = yield* select(positionsList)
+    const position = yield* call([invariant, invariant.getPosition], hexWalletAddress, length)
+    yield* put(actions.addPosition(position))
+    // yield* call(fetchBalances, [tokenX === wazeroAddress ? tokenY : tokenX])
+    yield* put(poolsActions.getPoolKeys())
+  } catch (e: unknown) {
+    const error = ensureError(e)
+    console.log(error)
+    yield* put(actions.setInitPositionSuccess(false))
+    closeSnackbar(loaderCreatePosition)
+    yield put(snackbarsActions.remove(loaderCreatePosition))
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+    if (isErrorMessage(error.message)) {
+      yield put(
+        snackbarsActions.add({
+          message: error.message,
+          variant: 'error',
+          persist: false
+        })
+      )
+    } else {
+      yield put(
+        snackbarsActions.add({
+          message: 'Failed to create position. Please try again.',
+          variant: 'error',
+          persist: false
+        })
+      )
+    }
+  }
 }
 
 export function* handleGetCurrentPositionTicks(action: PayloadAction<GetPositionTicks>) {

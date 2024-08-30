@@ -1,3 +1,4 @@
+import { ActorId } from '@invariant-labs/vara-sdk'
 import { TESTNET_INVARIANT_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { Network, RPC } from '@store/consts/static'
@@ -15,7 +16,7 @@ export interface IAlephZeroConnectionStore {
   networkType: Network
   blockNumber: number
   rpcAddress: string
-  invariantAddress: string
+  invariantAddress: ActorId
   // wrappedAZEROAddress: string
 }
 

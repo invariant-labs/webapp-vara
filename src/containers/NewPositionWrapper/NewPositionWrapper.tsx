@@ -11,6 +11,7 @@ import { PERCENTAGE_SCALE } from '@invariant-labs/vara-sdk/target/consts'
 import {
   ALL_FEE_TIERS_DATA,
   DEFAULT_NEW_POSITION_SLIPPAGE,
+  U128MAX,
   bestTiers,
   commonTokensForNetworks
 } from '@store/consts/static'
@@ -37,7 +38,7 @@ import {
   poolsArraySortedByFees
 } from '@store/selectors/pools'
 import { initPosition, plotTicks, shouldNotUpdateRange } from '@store/selectors/positions'
-import { balanceLoading, status, swapTokensDict } from '@store/selectors/wallet'
+import { balanceLoading, status, swapTokens, swapTokensDict } from '@store/selectors/wallet'
 
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { VariantType } from 'notistack'
@@ -65,6 +66,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   const loadingTicksAndTickMaps = useSelector(isLoadingTicksAndTickMaps)
   const isBalanceLoading = useSelector(balanceLoading)
   const shouldNotUpdatePriceRange = useSelector(shouldNotUpdateRange)
+  const network = useSelector(networkType)
 
   const { success, inProgress } = useSelector(initPosition)
 
@@ -80,7 +82,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const currentNetwork = useSelector(networkType)
 
-  // const tokensList = useSelector(swapTokens)
+  const tokensList = useSelector(swapTokens)
 
   const [poolIndex, setPoolIndex] = useState<number | null>(null)
 
@@ -297,6 +299,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   }, [poolKey])
 
   const addTokenHandler = async () => {
+    console.log(tokensList)
     // const psp22 = SingletonPSP22.getInstance()
     // if (psp22 && tokensList.findIndex(token => token.address.toString() === address) === -1) {
     //   getNewTokenOrThrow(address, psp22, walletAddress)
@@ -430,8 +433,8 @@ export const NewPositionWrapper: React.FC<IProps> = ({
         return tokenYAmount
       }
     } catch (error) {
-      // setIsGetLiquidityError(true)
-      // return printBigint(U128MAX, tokens[tokenA].decimals)
+      setIsGetLiquidityError(true)
+      return U128MAX
     }
 
     try {
@@ -449,8 +452,8 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       setIsGetLiquidityError(false)
       return tokenXAmount
     } catch (error) {
-      // setIsGetLiquidityError(true)
-      // return printBigint(U128MAX, tokens[tokenB].decimals)
+      setIsGetLiquidityError(true)
+      return U128MAX
     }
 
     return BigInt(0)
@@ -652,6 +655,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       isGetLiquidityError={isGetLiquidityError}
       onlyUserPositions={onlyUserPositions}
       setOnlyUserPositions={setOnlyUserPositions}
+      network={network}
     />
   )
 }

@@ -1,4 +1,4 @@
-import { PoolKey } from '@invariant-labs/vara-sdk'
+import { HexString, PoolKey } from '@invariant-labs/vara-sdk'
 import { ActionCreatorWithPayload } from '@reduxjs/toolkit'
 import { SwapError } from '@store/sagas/swap'
 import { Network } from './static'
@@ -54,7 +54,7 @@ export interface TokenPriceData {
 
 export interface Token {
   symbol: string
-  address: string
+  address: HexString
   decimals: bigint
   name: string
   logoURI: string

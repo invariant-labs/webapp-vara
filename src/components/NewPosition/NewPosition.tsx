@@ -7,7 +7,12 @@ import { PERCENTAGE_DENOMINATOR } from '@invariant-labs/vara-sdk/target/consts'
 import { Box, Button, Grid, Hidden, Typography } from '@mui/material'
 import backIcon from '@static/svg/back-arrow.svg'
 import settingIcon from '@static/svg/settings.svg'
-import { ALL_FEE_TIERS_DATA, PositionTokenBlock, REFRESHER_INTERVAL } from '@store/consts/static'
+import {
+  ALL_FEE_TIERS_DATA,
+  Network,
+  PositionTokenBlock,
+  REFRESHER_INTERVAL
+} from '@store/consts/static'
 import {
   calcPriceBySqrtPrice,
   calculateConcentrationRange,
@@ -80,7 +85,7 @@ export interface INewPosition {
   bestTiers: BestTier[]
   currentPriceSqrt: bigint
   handleAddToken: (address: string) => void
-  commonTokens: string[]
+  commonTokens: HexString[]
   initialOpeningPositionMethod: PositionOpeningMethod
   onPositionOpeningMethodChange: (val: PositionOpeningMethod) => void
   initialHideUnknownTokensValue: boolean
@@ -102,6 +107,7 @@ export interface INewPosition {
   isGetLiquidityError: boolean
   onlyUserPositions: boolean
   setOnlyUserPositions: (val: boolean) => void
+  network: Network
 }
 
 export const NewPosition: React.FC<INewPosition> = ({
@@ -154,6 +160,7 @@ export const NewPosition: React.FC<INewPosition> = ({
   isGetLiquidityError,
   onlyUserPositions,
   setOnlyUserPositions
+  // network
 }) => {
   const { classes } = useStyles()
   const navigate = useNavigate()
@@ -165,8 +172,8 @@ export const NewPosition: React.FC<INewPosition> = ({
   const [leftRange, setLeftRange] = useState(getMinTick(tickSpacing))
   const [rightRange, setRightRange] = useState(getMaxTick(tickSpacing))
 
-  const [tokenA, setTokenA] = useState<string | null>(null)
-  const [tokenB, setTokenB] = useState<string | null>(null)
+  const [tokenA, setTokenA] = useState<HexString | null>(null)
+  const [tokenB, setTokenB] = useState<HexString | null>(null)
 
   const [tokenADeposit, setTokenADeposit] = useState<string>('')
   const [tokenBDeposit, setTokenBDeposit] = useState<string>('')
@@ -650,7 +657,7 @@ export const NewPosition: React.FC<INewPosition> = ({
             const pom = tokenA
             setTokenA(tokenB)
             setTokenB(pom)
-            // onChangePositionTokens(tokenB, tokenA, currentFeeIndex)
+            onChangePositionTokens(tokenB, tokenA, currentFeeIndex)
 
             updatePath(tokenB, tokenA, currentFeeIndex)
           }}
@@ -672,6 +679,7 @@ export const NewPosition: React.FC<INewPosition> = ({
           isBalanceLoading={isBalanceLoading}
           isGetLiquidityError={isGetLiquidityError}
           ticksLoading={ticksLoading}
+          // network={network}
         />
         <Hidden mdUp>
           <Grid container justifyContent='end' mb={2}>
