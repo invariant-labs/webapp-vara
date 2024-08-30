@@ -42,7 +42,7 @@ export const tokensPrices: Record<Network, Record<string, TokenPriceData>> = {
 }
 
 export const FAUCET_DEPLOYER_MNEMONIC =
-  'motion ice subject actress spider rare leg fortune brown similar excess amazing'
+  'perfect piece sorry put inch unknown divert please together clap dutch among'
 
 export const FAUCET_TOKEN_AMOUNT = 1000n
 
@@ -115,12 +115,6 @@ export const DEFAULT_INVARIANT_OPTIONS = {
   storageDepositLimit: null,
   refTime: 100000000000,
   proofSize: 100000000000
-}
-
-export const DEFAULT_PSP22_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 5000000000,
-  proofSize: 5000000000
 }
 
 export const DEFAULT_WAZERO_OPTIONS = {

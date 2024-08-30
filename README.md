@@ -9,7 +9,7 @@
 
 </div>
 
-Invariant protocol is an AMM built on [Vara](https://vara.network), leveraging high capital efficiency and the ability to list markets in a permissionless manner. At the core of the DEX is the Concentrated Liquidity mechanism, designed to handle tokens compatible with the [GRC20 standard](https://github.com/w3f/PSPs/blob/master/PSPs/psp-22.md). The protocol is structured around a single contract architecture.
+Invariant protocol is an AMM built on [Vara](https://vara.network), leveraging high capital efficiency and the ability to list markets in a permissionless manner. At the core of the DEX is the Concentrated Liquidity mechanism, designed to handle tokens compatible with the [GRC20 standard](https://github.com/gear-foundation/standards). The protocol is structured around a single contract architecture.
 
 ## 🔨 Getting Started
 

@@ -1,6 +1,7 @@
 import {
   ActorId,
   FeeTier,
+  HexString,
   Pool,
   PoolKey,
   TESTNET_BTC_ADDRESS,
@@ -35,7 +36,7 @@ export interface IndexedFeeTier {
 }
 
 export interface IPoolsStore {
-  tokens: Record<string, Token>
+  tokens: Record<HexString, Token>
   pools: { [key in string]: PoolWithPoolKey }
   poolKeys: { [key in string]: PoolKey }
   poolTicks: { [key in string]: LiquidityTick[] }
@@ -127,7 +128,7 @@ const poolsSlice = createSlice({
       }
       return state
     },
-    updateTokenBalances(state, action: PayloadAction<[string, bigint][]>) {
+    updateTokenBalances(state, action: PayloadAction<[HexString, bigint][]>) {
       action.payload.map(pair => {
         state.tokens[pair[0]] = {
           ...state.tokens[pair[0]],

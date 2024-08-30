@@ -30,8 +30,8 @@ import MarketIdLabel from './MarketIdLabel/MarketIdLabel'
 import PoolInit from './PoolInit/PoolInit'
 import RangeSelector from './RangeSelector/RangeSelector'
 import useStyles from './style'
-import { Address, BestTier, PositionOpeningMethod, TokenPriceData } from '@store/consts/types'
-import { getConcentrationArray } from '@invariant-labs/vara-sdk/target/utils'
+import { BestTier, PositionOpeningMethod, TokenPriceData } from '@store/consts/types'
+import { getConcentrationArray, HexString } from '@invariant-labs/vara-sdk/target/utils'
 import { TooltipHover } from '@components/TooltipHover/TooltipHover'
 
 export interface INewPosition {
@@ -51,8 +51,8 @@ export interface INewPosition {
     slippage: bigint
   ) => void
   onChangePositionTokens: (
-    tokenAAddress: Address | null,
-    tokenBAddress: Address | null,
+    tokenAAddress: HexString | null,
+    tokenBAddress: HexString | null,
     feeTierIndex: number
   ) => void
   isCurrentPoolExisting: boolean

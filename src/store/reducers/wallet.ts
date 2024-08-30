@@ -1,3 +1,4 @@
+import { HexString } from '@gear-js/api'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { PayloadType } from '@store/consts/types'
 
@@ -51,7 +52,7 @@ const walletSlice = createSlice({
     getBalance(state) {
       return state
     },
-    getBalances(state, _action: PayloadAction<string[]>) {
+    getBalances(state, _action: PayloadAction<HexString[]>) {
       return state
     },
     setIsBalanceLoading(state, action: PayloadAction<boolean>) {

@@ -4,8 +4,9 @@ import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { rpcAddress } from '@store/selectors/connection'
 import { PayloadAction } from '@reduxjs/toolkit'
 import apiSingleton from '@store/services/apiSingleton'
+import grc20Singleton from '@store/services/grc20Singleton'
 import invariantSingleton from '@store/services/invariantSingleton'
-import { Invariant } from '@invariant-labs/vara-sdk'
+import { FungibleToken, Invariant } from '@invariant-labs/vara-sdk'
 import { GearApi } from '@gear-js/api'
 
 export function* getApi(): SagaGenerator<GearApi> {
@@ -16,7 +17,6 @@ export function* getApi(): SagaGenerator<GearApi> {
 
     api = yield* call([apiSingleton, apiSingleton.loadInstance], rpc)
   }
-
   return api
 }
 
@@ -32,17 +32,16 @@ export function* getInvariant(): SagaGenerator<Invariant> {
   return invariant
 }
 
-// export function* getPSP22(): SagaGenerator<PSP22> {
-//   let psp22 = yield* call([SingletonPSP22, SingletonPSP22.getInstance])
+export function* getGRC20(): SagaGenerator<FungibleToken> {
+  let GRC20 = yield* call([grc20Singleton, grc20Singleton.getInstance])
 
-//   if (!psp22) {
-//     const api = yield* call(getApi)
-//     const network = yield* select(networkType)
-//     psp22 = yield* call([SingletonPSP22, SingletonPSP22.loadInstance], api, network)
-//   }
+  if (!GRC20) {
+    const api = yield* call(getApi)
+    GRC20 = yield* call([grc20Singleton, grc20Singleton.loadInstance], api)
+  }
 
-//   return psp22
-// }
+  return GRC20
+}
 
 // export function* getWrappedAZERO(): SagaGenerator<WrappedAZERO> {
 //   let wrappedAZERO = yield* call([SingletonWrappedAZERO, SingletonWrappedAZERO.getInstance])

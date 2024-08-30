@@ -4,6 +4,7 @@ import {
   calculateSqrtPrice,
   getLiquidityByX,
   getLiquidityByY,
+  HexString,
   newPoolKey
 } from '@invariant-labs/vara-sdk'
 import { PERCENTAGE_SCALE } from '@invariant-labs/vara-sdk/target/consts'
@@ -13,7 +14,7 @@ import {
   bestTiers,
   commonTokensForNetworks
 } from '@store/consts/static'
-import { Address, PositionOpeningMethod, TokenPriceData } from '@store/consts/types'
+import { PositionOpeningMethod, TokenPriceData } from '@store/consts/types'
 import {
   calcPriceBySqrtPrice,
   calcPriceByTickIndex,
@@ -86,8 +87,8 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   const [poolKey, setPoolKey] = useState<string>('')
   const [progress, setProgress] = useState<ProgressState>('none')
 
-  const [tokenA, setTokenA] = useState<Address | null>(null)
-  const [tokenB, setTokenB] = useState<Address | null>(null)
+  const [tokenA, setTokenA] = useState<HexString | null>(null)
+  const [tokenB, setTokenB] = useState<HexString | null>(null)
 
   const [currentPairReversed, setCurrentPairReversed] = useState<boolean | null>(null)
 
