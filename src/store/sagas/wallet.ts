@@ -32,6 +32,10 @@ import { batchTxs } from '@invariant-labs/vara-sdk'
 
 export function* getWallet(): SagaGenerator<NightlyConnectAdapter> {
   const wallet = yield* call(getVaraWallet)
+  if (!wallet.connected) {
+    yield* call([wallet, wallet.connect])
+  }
+
   return wallet
 }
 
@@ -74,8 +78,7 @@ export function* handleAirdrop(): Generator {
   const walletAddress = yield* select(hexAddress)
   const walletBalance = yield* select(balance)
 
-  //TODO check sage transaction fee
-  console.log(FAUCET_SAFE_TRANSACTION_FEE)
+  //TODO check saga transaction fee
   if (FAUCET_SAFE_TRANSACTION_FEE > walletBalance) {
     return yield* put(
       snackbarsActions.add({
@@ -187,13 +190,16 @@ export function* init(isEagerConnect: boolean): Generator {
       )
     }
 
+    // if (accounts.length === 0) {
+    //   yield* put(actions.setStatus(Status.Error))
+    //   return
+    // }
     yield* put(actions.setAddress(accounts[0].address))
-    console.log('1')
+
     const allTokens = yield* select(tokens)
     const tokensList = Object.keys(allTokens) as HexString[]
-    console.log('2')
+
     yield* call(fetchBalances, tokensList)
-    console.log('initialized')
     yield* put(actions.setStatus(Status.Initialized))
   } catch (error) {
     console.log(error)

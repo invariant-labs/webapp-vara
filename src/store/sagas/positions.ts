@@ -9,7 +9,7 @@ import {
   isErrorMessage,
   poolKeyToString
 } from '@utils/utils'
-import { FetchTicksAndTickMaps, actions as poolsActions } from '@store/reducers/pools'
+import { FetchTicksAndTickMaps, ListType, actions as poolsActions } from '@store/reducers/pools'
 import { actions as walletActions } from '@store/reducers/wallet'
 import {
   GetCurrentTicksData,
@@ -19,17 +19,23 @@ import {
 } from '@store/reducers/positions'
 import { poolsArraySortedByFees, tickMaps, tokens } from '@store/selectors/pools'
 import { all, call, fork, join, put, select, spawn, takeEvery, takeLatest } from 'typed-redux-saga'
-import { fetchTicksAndTickMaps } from './pools'
+import { fetchTicksAndTickMaps, fetchTokens } from './pools'
 import { positionsList } from '@store/selectors/positions'
 import { getApi, getGRC20, getInvariant } from './connection'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { invariantAddress } from '@store/selectors/connection'
-import { address, balance, hexAddress } from '@store/selectors/wallet'
+import { address, hexAddress } from '@store/selectors/wallet'
 import { getVaraWallet } from '@utils/web3/wallet'
-import { batchTxs, calculateTokenAmountsWithSlippage } from '@invariant-labs/vara-sdk/target/utils'
-import { FAUCET_DEPLOYER_MNEMONIC } from '@store/consts/static'
+import {
+  ActorId,
+  calculateTokenAmountsWithSlippage,
+  Signer
+} from '@invariant-labs/vara-sdk/target/utils'
+import { EMPTY_POSITION, ErrorMessage, POSITIONS_PER_QUERY } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
-import { GearKeyring } from '@gear-js/api'
+import { SubmittableExtrinsic } from '@polkadot/api/promise/types'
+import { Pool, Position, Tick } from '@invariant-labs/vara-sdk'
+import { getWallet } from './wallet'
 
 // export function getWithdrawAllWAZEROTxs(
 //   invariant: Invariant,
@@ -66,7 +72,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
   const { tokenX, tokenY, feeTier } = poolKeyData
   const loaderCreatePosition = createLoaderKey()
   const loaderSigningTx = createLoaderKey()
-  console.log('poolKeyData', poolKeyData)
 
   try {
     yield put(
@@ -79,29 +84,15 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     )
     const stringWalletAddress = yield* select(address)
     const hexWalletAddress = yield* select(hexAddress)
-    const adapter = yield* call(getVaraWallet)
-    const azeroBalance = yield* select(balance)
+    const adapter = yield* call(getWallet)
+
+    // const azeroBalance = yield* select(balance)
     const invAddress = yield* select(invariantAddress)
     const grc20 = yield* getGRC20()
     const api = yield* getApi()
     const invariant = yield* getInvariant()
-    const deployerAccount = yield* call(
-      [GearKeyring, GearKeyring.fromMnemonic],
-      FAUCET_DEPLOYER_MNEMONIC
-    )
-    console.log('deployerAccount', deployerAccount)
 
-    const txs = []
-
-    console.log('tickSpacing :' + feeTier.tickSpacing)
-    console.log('spotSqrtPrice :' + spotSqrtPrice)
-    console.log('liquidityDelta :' + liquidityDelta)
-    console.log('lowerTick :' + lowerTick)
-    console.log('upperTick :' + upperTick)
-    console.log('slippageTolerance : ' + slippageTolerance)
-    console.log('initPool' + initPool)
-
-    //TODO fix error of calculateTokenAmountsWithSlippage
+    const txs1 = []
     const [xAmountWithSlippage, yAmountWithSlippage] = calculateTokenAmountsWithSlippage(
       feeTier.tickSpacing,
       spotSqrtPrice,
@@ -111,12 +102,37 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       slippageTolerance,
       true
     )
-    console.log('xAmountWithSlippage', xAmountWithSlippage)
     const XTokenTx = yield* call([grc20, grc20.approveTx], invAddress, xAmountWithSlippage, tokenX)
 
-    txs.push(XTokenTx)
+    txs1.push(XTokenTx.withAccount(adapter.signer as Signer).extrinsic)
+
     const YTokenTx = yield* call([grc20, grc20.approveTx], invAddress, yAmountWithSlippage, tokenY)
-    txs.push(YTokenTx)
+
+    txs1.push(YTokenTx.withAccount(adapter.signer as Signer).extrinsic)
+
+    const depositTx = yield* call(
+      [invariant, invariant.depositTokenPairTx],
+      [hexWalletAddress, tokenXAmount] as [ActorId, bigint],
+      [hexWalletAddress, tokenYAmount] as [ActorId, bigint]
+    )
+
+    txs1.push(depositTx.withAccount(adapter.signer as Signer).extrinsic)
+
+    const batchedTx1 = yield* call([api.tx.utility, api.tx.utility.batchAll], txs1)
+
+    let signedBatchedTx1: SubmittableExtrinsic
+    try {
+      signedBatchedTx1 = yield* call([batchedTx1, batchedTx1.signAsync], hexWalletAddress, {
+        signer: adapter.signer as any
+      })
+    } catch (e) {
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
+
+    const txResult1 = yield* call([signedBatchedTx1, signedBatchedTx1.send])
+    console.log(txResult1.toString())
+
+    const txs2 = []
 
     if (initPool) {
       const createPoolTx = yield* call(
@@ -124,8 +140,8 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         poolKeyData,
         spotSqrtPrice
       )
-      invariant.createPoolTx(poolKeyData, spotSqrtPrice)
-      txs.push(createPoolTx)
+
+      txs2.push(createPoolTx.withAccount(adapter.signer as Signer).extrinsic)
     }
 
     const tx = yield* call(
@@ -138,9 +154,9 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       slippageTolerance
     )
 
-    txs.push(tx)
+    txs2.push(tx.withAccount(adapter.signer as Signer).extrinsic)
 
-    yield* call(batchTxs, api, hexWalletAddress, txs)
+    const batchedTx2 = yield* call([api.tx.utility, api.tx.utility.batchAll], txs2)
 
     yield put(
       snackbarsActions.add({
@@ -150,14 +166,18 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         key: loaderSigningTx
       })
     )
-    // let signedBatchedTx: SubmittableExtrinsic
-    // try {
-    //   signedBatchedTx = yield* call([batchedTx, batchedTx.signAsync], hexWalletAddress, {
-    //     signer: adapter.signer as Signer
-    //   })
-    // } catch (e) {
-    //   throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
-    // }
+
+    let signedBatchedTx2: SubmittableExtrinsic
+    try {
+      signedBatchedTx2 = yield* call([batchedTx2, batchedTx2.signAsync], hexWalletAddress, {
+        signer: adapter.signer as any
+      })
+    } catch (e) {
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
+
+    const txResult2 = yield* call([signedBatchedTx2, signedBatchedTx2.send])
+
     closeSnackbar(loaderSigningTx)
     yield put(snackbarsActions.remove(loaderSigningTx))
 
@@ -171,15 +191,19 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       snackbarsActions.add({
         message: 'Position created.',
         variant: 'success',
-        persist: false
-        // txid: txResult.hash
+        persist: false,
+        txid: txResult2.toString()
       })
     )
+
     yield put(walletActions.getBalances([tokenX, tokenY]))
-    const { length } = yield* select(positionsList)
-    const position = yield* call([invariant, invariant.getPosition], hexWalletAddress, length)
-    yield* put(actions.addPosition(position))
-    // yield* call(fetchBalances, [tokenX === wazeroAddress ? tokenY : tokenX])
+
+    // const { length } = yield* select(positionsList)
+
+    // const position = yield* call([invariant, invariant.getPosition], hexWalletAddress, length)
+    // console.log('position' + position)
+    // yield* put(actions.addPosition(position))
+
     yield* put(poolsActions.getPoolKeys())
   } catch (e: unknown) {
     const error = ensureError(e)
@@ -315,13 +339,154 @@ export function* handleGetCurrentPlotTicks(action: PayloadAction<GetCurrentTicks
 
 export function* handleClaimFee() {}
 
-export function* handleGetSinglePosition() {}
+export function* handleGetSinglePosition(action: PayloadAction<bigint>) {
+  try {
+    const walletAddress = yield* select(hexAddress)
+    const invariant = yield* getInvariant()
+    const [position, pool, lowerTick, upperTick] = yield* call(
+      [invariant, invariant.getPositionWithAssociates],
+      walletAddress,
+      action.payload
+    )
+    const assertPosition = position as Position
+    yield* put(
+      actions.setSinglePosition({
+        index: action.payload,
+        position: position as Position
+      })
+    )
+    yield put(
+      actions.setCurrentPositionTicks({
+        lowerTick: lowerTick as Tick,
+        upperTick: upperTick as Tick
+      })
+    )
+    yield* put(
+      poolsActions.addPoolsForList({
+        data: [{ poolKey: assertPosition.poolKey, ...(pool as Pool) }],
+        listType: ListType.POSITIONS
+      })
+    )
+  } catch (e) {
+    console.log(e)
+  }
+}
 
 export function* handleClosePosition() {}
 
-export function* handleGetRemainingPositions(): Generator {}
+export function* handleGetRemainingPositions(): Generator {
+  const walletAddress = yield* select(hexAddress)
+  const { length, list, loadedPages } = yield* select(positionsList)
 
-export function* handleGetPositionsListPage() {}
+  const invariant = yield* getInvariant()
+
+  const pages = yield* call(
+    [invariant, invariant.getAllPositions],
+    walletAddress,
+    length,
+    Object.entries(loadedPages)
+      .filter(([_, isLoaded]) => isLoaded)
+      .map(([index]) => Number(index)),
+    BigInt(POSITIONS_PER_QUERY)
+  )
+
+  const allList = [...list]
+  for (const { index, entries } of pages) {
+    for (let i = 0; i < entries.length; i++) {
+      allList[i + index * Number(POSITIONS_PER_QUERY)] = entries[i][0]
+    }
+  }
+
+  yield* put(actions.setPositionsList(allList))
+  yield* put(
+    actions.setPositionsListLoadedStatus({
+      indexes: pages.map(({ index }: { index: number }) => index),
+      isLoaded: true
+    })
+  )
+}
+
+export function* handleGetPositionsListPage(
+  action: PayloadAction<{ index: number; refresh: boolean }>
+) {
+  const { index, refresh } = action.payload
+
+  const walletAddress = yield* select(hexAddress)
+  const { length, list, loadedPages } = yield* select(positionsList)
+
+  const invariant = yield* getInvariant()
+
+  let entries: [Position, Pool][] = []
+  let positionsLength = 0n
+
+  if (refresh) {
+    yield* put(
+      actions.setPositionsListLoadedStatus({
+        indexes: Object.keys(loadedPages)
+          .map(key => Number(key))
+          .filter(keyIndex => keyIndex !== index),
+        isLoaded: false
+      })
+    )
+  }
+
+  if (!length || refresh) {
+    const result = yield* call(
+      [invariant, invariant.getPositions],
+      walletAddress,
+      BigInt(POSITIONS_PER_QUERY),
+      BigInt(index * POSITIONS_PER_QUERY)
+    )
+    entries = result[0]
+    positionsLength = result[1]
+
+    const poolsWithPoolKeys = entries.map(entry => ({
+      poolKey: entry[0].poolKey,
+      ...entry[1]
+    }))
+
+    yield* put(
+      poolsActions.addPoolsForList({ data: poolsWithPoolKeys, listType: ListType.POSITIONS })
+    )
+    yield* call(fetchTokens, poolsWithPoolKeys)
+
+    yield* put(actions.setPositionsListLength(positionsLength))
+  }
+
+  const allList = length ? [...list] : Array(Number(positionsLength)).fill(EMPTY_POSITION)
+
+  const isPageLoaded = loadedPages[index]
+
+  if (!isPageLoaded || refresh) {
+    if (length && !refresh) {
+      const result = yield* call(
+        [invariant, invariant.getPositions],
+        walletAddress,
+        BigInt(POSITIONS_PER_QUERY),
+        BigInt(index * POSITIONS_PER_QUERY)
+      )
+      entries = result[0]
+      positionsLength = result[1]
+
+      const poolsWithPoolKeys = entries.map(entry => ({
+        poolKey: entry[0].poolKey,
+        ...entry[1]
+      }))
+
+      yield* put(
+        poolsActions.addPoolsForList({ data: poolsWithPoolKeys, listType: ListType.POSITIONS })
+      )
+      yield* call(fetchTokens, poolsWithPoolKeys)
+    }
+
+    for (let i = 0; i < entries.length; i++) {
+      allList[i + index * POSITIONS_PER_QUERY] = entries[i][0]
+    }
+  }
+
+  yield* put(actions.setPositionsList(allList))
+  yield* put(actions.setPositionsListLoadedStatus({ indexes: [index], isLoaded: true }))
+}
 
 export function* initPositionHandler(): Generator {
   yield* takeEvery(actions.initPosition, handleInitPosition)

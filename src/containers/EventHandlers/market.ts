@@ -33,7 +33,6 @@ const MarketEvents = () => {
               .filter((address: string) => !tokens[address])
               .map((address: string) => address)
           : []
-      console.log(currentList)
       // getTokenDataByAddresses(currentList, psp22, walletAddress)
       //   .then(data => {
       //     tokens = {

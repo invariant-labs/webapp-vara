@@ -1,5 +1,4 @@
 import {
-  ActorId,
   FeeTier,
   HexString,
   Pool,
@@ -97,8 +96,8 @@ export const defaultState: IPoolsStore = {
 }
 
 export interface PairTokens {
-  first: ActorId
-  second: ActorId
+  first: HexString
+  second: HexString
 }
 
 export enum ListType {

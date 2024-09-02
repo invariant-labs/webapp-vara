@@ -28,7 +28,6 @@ export function* getInvariant(): SagaGenerator<Invariant> {
 
     invariant = yield* call([invariantSingleton, invariantSingleton.loadInstance], api)
   }
-  console.log('invariant' + invariant)
   return invariant
 }
 

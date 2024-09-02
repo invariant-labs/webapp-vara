@@ -32,7 +32,7 @@ const RootPage: React.FC = React.memo(() => {
   useEffect(() => {
     initConnection()
   }, [initConnection])
-  console.log(signerStatus)
+
   return (
     <>
       {signerStatus === Status.Initialized && <EventsHandlers />}
