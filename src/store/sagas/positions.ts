@@ -24,16 +24,14 @@ import { positionsList } from '@store/selectors/positions'
 import { getApi, getGRC20, getInvariant } from './connection'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { invariantAddress } from '@store/selectors/connection'
-import { address, hexAddress } from '@store/selectors/wallet'
-import { getVaraWallet } from '@utils/web3/wallet'
+import { hexAddress } from '@store/selectors/wallet'
 import {
   ActorId,
-  calculateTokenAmountsWithSlippage,
-  Signer
+  batchTxs,
+  calculateTokenAmountsWithSlippage
 } from '@invariant-labs/vara-sdk/target/utils'
-import { EMPTY_POSITION, ErrorMessage, POSITIONS_PER_QUERY } from '@store/consts/static'
+import { EMPTY_POSITION, POSITIONS_PER_QUERY } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
-import { SubmittableExtrinsic } from '@polkadot/api/promise/types'
 import { Pool, Position, Tick } from '@invariant-labs/vara-sdk'
 import { getWallet } from './wallet'
 
@@ -63,8 +61,8 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     lowerTick,
     upperTick,
     spotSqrtPrice,
-    tokenXAmount,
-    tokenYAmount,
+    // tokenXAmount,
+    // tokenYAmount,
     liquidityDelta,
     initPool,
     slippageTolerance
@@ -82,17 +80,15 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         key: loaderCreatePosition
       })
     )
-    const stringWalletAddress = yield* select(address)
     const hexWalletAddress = yield* select(hexAddress)
     const adapter = yield* call(getWallet)
-
-    // const azeroBalance = yield* select(balance)
     const invAddress = yield* select(invariantAddress)
     const grc20 = yield* getGRC20()
     const api = yield* getApi()
     const invariant = yield* getInvariant()
 
-    const txs1 = []
+    api.setSigner(adapter.signer as any)
+
     const [xAmountWithSlippage, yAmountWithSlippage] = calculateTokenAmountsWithSlippage(
       feeTier.tickSpacing,
       spotSqrtPrice,
@@ -104,35 +100,26 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     )
     const XTokenTx = yield* call([grc20, grc20.approveTx], invAddress, xAmountWithSlippage, tokenX)
 
-    txs1.push(XTokenTx.withAccount(adapter.signer as Signer).extrinsic)
-
     const YTokenTx = yield* call([grc20, grc20.approveTx], invAddress, yAmountWithSlippage, tokenY)
-
-    txs1.push(YTokenTx.withAccount(adapter.signer as Signer).extrinsic)
 
     const depositTx = yield* call(
       [invariant, invariant.depositTokenPairTx],
-      [hexWalletAddress, tokenXAmount] as [ActorId, bigint],
-      [hexWalletAddress, tokenYAmount] as [ActorId, bigint]
+      [poolKeyData.tokenX, xAmountWithSlippage] as [ActorId, bigint],
+      [poolKeyData.tokenY, yAmountWithSlippage] as [ActorId, bigint]
     )
 
-    txs1.push(depositTx.withAccount(adapter.signer as Signer).extrinsic)
-
-    const batchedTx1 = yield* call([api.tx.utility, api.tx.utility.batchAll], txs1)
-
-    let signedBatchedTx1: SubmittableExtrinsic
-    try {
-      signedBatchedTx1 = yield* call([batchedTx1, batchedTx1.signAsync], hexWalletAddress, {
-        signer: adapter.signer as any
+    yield put(
+      snackbarsActions.add({
+        message: 'Signing transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderSigningTx
       })
-    } catch (e) {
-      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
-    }
+    )
 
-    const txResult1 = yield* call([signedBatchedTx1, signedBatchedTx1.send])
-    console.log(txResult1.toString())
+    yield* call(batchTxs, api, hexWalletAddress, [XTokenTx, YTokenTx, depositTx])
 
-    const txs2 = []
+    const txs = []
 
     if (initPool) {
       const createPoolTx = yield* call(
@@ -141,7 +128,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         spotSqrtPrice
       )
 
-      txs2.push(createPoolTx.withAccount(adapter.signer as Signer).extrinsic)
+      txs.push(createPoolTx)
     }
 
     const tx = yield* call(
@@ -154,34 +141,12 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       slippageTolerance
     )
 
-    txs2.push(tx.withAccount(adapter.signer as Signer).extrinsic)
+    txs.push(tx)
 
-    const batchedTx2 = yield* call([api.tx.utility, api.tx.utility.batchAll], txs2)
-
-    yield put(
-      snackbarsActions.add({
-        message: 'Signing transaction...',
-        variant: 'pending',
-        persist: true,
-        key: loaderSigningTx
-      })
-    )
-
-    let signedBatchedTx2: SubmittableExtrinsic
-    try {
-      signedBatchedTx2 = yield* call([batchedTx2, batchedTx2.signAsync], hexWalletAddress, {
-        signer: adapter.signer as any
-      })
-    } catch (e) {
-      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
-    }
-
-    const txResult2 = yield* call([signedBatchedTx2, signedBatchedTx2.send])
+    yield* call(batchTxs, api, hexWalletAddress, txs)
 
     closeSnackbar(loaderSigningTx)
     yield put(snackbarsActions.remove(loaderSigningTx))
-
-    // const txResult = yield* call(sendTx, signedBatchedTx)
 
     yield* put(actions.setInitPositionSuccess(true))
     closeSnackbar(loaderCreatePosition)
@@ -191,21 +156,24 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       snackbarsActions.add({
         message: 'Position created.',
         variant: 'success',
-        persist: false,
-        txid: txResult2.toString()
+        persist: false
+        // txid: txResult2.toString()
       })
     )
 
     yield put(walletActions.getBalances([tokenX, tokenY]))
 
-    // const { length } = yield* select(positionsList)
+    const { length } = yield* select(positionsList)
 
-    // const position = yield* call([invariant, invariant.getPosition], hexWalletAddress, length)
-    // console.log('position' + position)
-    // yield* put(actions.addPosition(position))
+    const position = yield* call([invariant, invariant.getPosition], hexWalletAddress, length)
+    yield* put(actions.addPosition(position))
 
     yield* put(poolsActions.getPoolKeys())
-  } catch (e: unknown) {
+  } catch (e: any) {
+    if (e.failedTxs) {
+      console.log(e.failedTxs)
+    }
+
     const error = ensureError(e)
     console.log(error)
     yield* put(actions.setInitPositionSuccess(false))
