@@ -22,7 +22,7 @@ const MarketEvents = () => {
 
   useEffect(() => {
     const connectEvents = async () => {
-      const api = await apiSingleton.loadInstance(rpc)
+      const api = await apiSingleton.loadInstance(network)
       await grc20Singleton.loadInstance(api)
       // const grc20 = await grc20Singleton.loadInstance(api)
       const tokens = getNetworkTokensList(network)
@@ -33,7 +33,6 @@ const MarketEvents = () => {
               .filter((address: string) => !tokens[address])
               .map((address: string) => address)
           : []
-      console.log(currentList)
       // getTokenDataByAddresses(currentList, psp22, walletAddress)
       //   .then(data => {
       //     tokens = {

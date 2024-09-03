@@ -33,7 +33,7 @@ export interface SwapToken {
   balance: bigint
   decimals: bigint
   symbol: string
-  assetAddress: string
+  assetAddress: HexString
   name: string
   logoURI: string
   isUnknown?: boolean

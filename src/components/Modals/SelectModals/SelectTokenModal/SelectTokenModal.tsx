@@ -23,17 +23,18 @@ import { SwapToken } from '@store/selectors/wallet'
 import Scrollbars from 'rc-scrollbars'
 import icons from '@static/icons'
 import { TooltipHover } from '@components/TooltipHover/TooltipHover'
+import { HexString } from '@gear-js/api'
 
 export interface ISelectTokenModal {
-  tokens: Record<string, SwapToken>
-  commonTokens: string[]
+  tokens: Record<HexString, SwapToken>
+  commonTokens: HexString[]
   open: boolean
   handleClose: () => void
   anchorEl: HTMLButtonElement | null
   centered?: boolean
-  onSelect: (address: string) => void
+  onSelect: (address: HexString) => void
   hideBalances?: boolean
-  handleAddToken: (address: string) => void
+  handleAddToken: (address: HexString) => void
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void
   hiddenUnknownTokens: boolean
@@ -88,7 +89,7 @@ export const SelectTokenModal: React.FC<ISelectTokenModal> = ({
     const commonTokensList: SwapToken[] = []
 
     commonTokens.forEach(assetAddress => {
-      const token = tokens[assetAddress.toString()]
+      const token = tokens[assetAddress]
 
       if (token) {
         commonTokensList.push({ ...token, assetAddress })
@@ -114,7 +115,7 @@ export const SelectTokenModal: React.FC<ISelectTokenModal> = ({
           continue
         }
 
-        filteredTokens.push({ ...token, assetAddress })
+        filteredTokens.push({ ...token, assetAddress: assetAddress as HexString })
       }
     }
 
@@ -355,7 +356,7 @@ export const SelectTokenModal: React.FC<ISelectTokenModal> = ({
       <AddTokenModal
         open={isAddOpen}
         handleClose={() => setIsAddOpen(false)}
-        addToken={(address: string) => {
+        addToken={(address: HexString) => {
           handleAddToken(address)
           setIsAddOpen(false)
           setHideUnknown(false)

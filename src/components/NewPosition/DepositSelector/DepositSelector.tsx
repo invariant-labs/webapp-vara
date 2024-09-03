@@ -7,6 +7,7 @@ import { ALL_FEE_TIERS_DATA } from '@store/consts/static'
 import {
   convertBalanceToBigint,
   getScaleFromString,
+  parsePathFeeToFeeString,
   printBigint,
   tickerToAddress
 } from '@utils/utils'
@@ -17,7 +18,8 @@ import { useStyles } from './style'
 import { PositionOpeningMethod } from '@store/consts/types'
 import { SwapToken } from '@store/selectors/wallet'
 import { TooltipHover } from '@components/TooltipHover/TooltipHover'
-import { HexString } from '@gear-js/api'
+import { decodeAddress, HexString } from '@gear-js/api'
+
 export interface InputState {
   value: string
   setValue: (value: string) => void
@@ -48,7 +50,7 @@ export interface IDepositSelector {
   poolIndex: number | null
   bestTierIndex?: number
   handleAddToken: (address: string) => void
-  commonTokens: string[]
+  commonTokens: HexString[]
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void
   priceALoading?: boolean
@@ -66,9 +68,9 @@ export interface IDepositSelector {
 export const DepositSelector: React.FC<IDepositSelector> = ({
   initialTokenFrom,
   initialTokenTo,
-  // initialFee,
+  initialFee,
   tokens,
-  // setPositionTokens,
+  setPositionTokens,
   onAddLiquidity,
   tokenAInputState,
   tokenBInputState,
@@ -97,8 +99,8 @@ export const DepositSelector: React.FC<IDepositSelector> = ({
 }) => {
   const { classes } = useStyles()
 
-  const [tokenA, setTokenA] = useState<string | null>(null)
-  const [tokenB, setTokenB] = useState<string | null>(null)
+  const [tokenA, setTokenA] = useState<HexString | null>(null)
+  const [tokenB, setTokenB] = useState<HexString | null>(null)
 
   const [hideUnknownTokens, setHideUnknownTokens] = useState<boolean>(initialHideUnknownTokensValue)
 
@@ -111,19 +113,20 @@ export const DepositSelector: React.FC<IDepositSelector> = ({
 
     const tokenAFromPath = tokens[tickerToAddress(initialTokenFrom)]?.assetAddress || null
     const tokenBFromPath = tokens[tickerToAddress(initialTokenTo)]?.assetAddress || null
-    // let feeTierIndexFromPath = 0
+    let feeTierIndexFromPath = 0
 
-    // const parsedFee = parsePathFeeToFeeString(initialFee)
+    const parsedFee = parsePathFeeToFeeString(initialFee)
 
-    // ALL_FEE_TIERS_DATA.forEach((feeTierData, index) => {
-    //   if (feeTierData.tier.fee.toString() === parsedFee) {
-    //     feeTierIndexFromPath = index
-    //   }
-    // })
-
-    setTokenA(tokenAFromPath)
-    setTokenB(tokenBFromPath)
-    // setPositionTokens(tokenAFromPath, tokenBFromPath, feeTierIndexFromPath)
+    ALL_FEE_TIERS_DATA.forEach((feeTierData, index) => {
+      if (feeTierData.tier.fee.toString() === parsedFee) {
+        feeTierIndexFromPath = index
+      }
+    })
+    const decodedTokenA = typeof tokenAFromPath === 'string' ? decodeAddress(tokenAFromPath) : null
+    const decodedTokenB = typeof tokenBFromPath === 'string' ? decodeAddress(tokenBFromPath) : null
+    setTokenA(decodedTokenA)
+    setTokenB(decodedTokenB)
+    setPositionTokens(decodedTokenA, decodedTokenB, feeTierIndexFromPath)
 
     setIsLoaded(true)
   }, [Object.keys(tokens).length])
@@ -219,7 +222,7 @@ export const DepositSelector: React.FC<IDepositSelector> = ({
               current={tokenA !== null ? tokens[tokenA] : null}
               onSelect={address => {
                 setTokenA(address)
-                // setPositionTokens(address, tokenB, feeTierIndex)
+                setPositionTokens(address, tokenB, feeTierIndex)
               }}
               centered
               className={classes.customSelect}
@@ -264,7 +267,7 @@ export const DepositSelector: React.FC<IDepositSelector> = ({
               current={tokenB !== null ? tokens[tokenB] : null}
               onSelect={index => {
                 setTokenB(index)
-                // setPositionTokens(tokenA, index, feeTierIndex)
+                setPositionTokens(tokenA, index, feeTierIndex)
               }}
               centered
               className={classes.customSelect}
@@ -282,8 +285,8 @@ export const DepositSelector: React.FC<IDepositSelector> = ({
         </Grid>
 
         <FeeSwitch
-          onSelect={() => {
-            // setPositionTokens(tokenA, tokenB, fee)
+          onSelect={fee => {
+            setPositionTokens(tokenA, tokenB, fee)
           }}
           feeTiers={feeTiers}
           showOnlyPercents

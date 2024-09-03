@@ -1,21 +1,21 @@
 import { all, call, put, SagaGenerator, select, takeLeading, spawn, delay } from 'typed-redux-saga'
 import { actions, Status, PayloadTypes } from '@store/reducers/connection'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
-import { rpcAddress } from '@store/selectors/connection'
 import { PayloadAction } from '@reduxjs/toolkit'
 import apiSingleton from '@store/services/apiSingleton'
 import grc20Singleton from '@store/services/grc20Singleton'
 import invariantSingleton from '@store/services/invariantSingleton'
 import { FungibleToken, Invariant } from '@invariant-labs/vara-sdk'
 import { GearApi } from '@gear-js/api'
+import { networkType } from '@store/selectors/connection'
 
 export function* getApi(): SagaGenerator<GearApi> {
   let api = yield* call([apiSingleton, apiSingleton.getInstance])
 
   if (!api) {
-    const rpc = yield* select(rpcAddress)
+    const network = yield* select(networkType)
 
-    api = yield* call([apiSingleton, apiSingleton.loadInstance], rpc)
+    api = yield* call([apiSingleton, apiSingleton.loadInstance], network)
   }
   return api
 }
@@ -28,7 +28,6 @@ export function* getInvariant(): SagaGenerator<Invariant> {
 
     invariant = yield* call([invariantSingleton, invariantSingleton.loadInstance], api)
   }
-  console.log('invariant' + invariant)
   return invariant
 }
 

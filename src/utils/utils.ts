@@ -62,7 +62,6 @@ import {
   Token,
   TokenPriceData
 } from '@store/consts/types'
-
 export const createLoaderKey = () => (new Date().getMilliseconds() + Math.random()).toString()
 
 export const getInvariantAddress = (network: Network): string | null => {
@@ -362,17 +361,13 @@ export const getTokenBalances = async (
   grc20: FungibleToken,
   address: ActorId
 ): Promise<[string, bigint][]> => {
-  // const keyring = await GearKeyring.fromSeed(address, 'walletAddress')
-  // console.log(keyring.addressRaw)
-
   const promises: Promise<bigint>[] = []
   tokens.map(token => {
     promises.push(grc20.balanceOf(address, token))
   })
 
-  console.log('promises')
   const results = await Promise.all(promises)
-  console.log('results' + results)
+
   const tokenBalances: [string, bigint][] = []
   tokens.map((token, index) => {
     tokenBalances.push([token, results[index]])
@@ -924,7 +919,7 @@ export const isErrorMessage = (message: string): boolean => {
   return false
 }
 
-export const getNewTokenOrThrow = async (): Promise<any> => {}
+export const getNewTokenOrThrow = async (): Promise<any> => {} //TODO
 
 export const addNewTokenToLocalStorage = (address: string, network: Network) => {
   const currentListStr = localStorage.getItem(`CUSTOM_TOKENS_${network}`)

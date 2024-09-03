@@ -1,16 +1,17 @@
 import React, { useState } from 'react'
 import useStyles from './style'
 import { Button, Grid, Input, Popover, Typography } from '@mui/material'
+import { decodeAddress, HexString } from '@gear-js/api'
 
 export interface IProps {
   open: boolean
   handleClose: () => void
-  addToken: (address: string) => void
+  addToken: (address: HexString) => void
 }
 export const AddTokenModal: React.FC<IProps> = ({ open, handleClose, addToken }) => {
   const { classes } = useStyles()
 
-  const [address, setAddress] = useState('')
+  const [address, setAddress] = useState<HexString | null>(null)
 
   return (
     <Popover
@@ -38,18 +39,20 @@ export const AddTokenModal: React.FC<IProps> = ({ open, handleClose, addToken })
           <Input
             classes={{ input: classes.input }}
             placeholder='Token address'
-            onChange={e => setAddress(e.target.value)}
+            onChange={e => setAddress( decodeAddress(e.target.value) )}
             value={address}
             disableUnderline
           />
           <Button
             className={classes.add}
             onClick={() => {
-              addToken(address)
-              setAddress('')
+              if (address !== null){
+                addToken(address)
+                setAddress(null)
+              }
             }}
             disableRipple
-            disabled={address.length === 0}>
+            disabled={address !== null && address.length === 0}>
             Add
           </Button>
         </Grid>

@@ -32,6 +32,15 @@ import { batchTxs } from '@invariant-labs/vara-sdk'
 
 export function* getWallet(): SagaGenerator<NightlyConnectAdapter> {
   const wallet = yield* call(getVaraWallet)
+  if (!wallet.connected) {
+    yield* call([wallet, wallet.connect])
+
+    const accounts = yield* call([wallet.accounts, wallet.accounts.get])
+
+    yield* put(actions.setAddress(accounts[0].address))
+    yield* put(actions.setStatus(Status.Initialized))
+  }
+
   return wallet
 }
 
@@ -60,10 +69,9 @@ export function* getBalance(walletAddress: string): SagaGenerator<string> {
 }
 
 export function* handleAirdrop(): Generator {
-  const walletAddress = yield* select(hexAddress)
-  const walletBalance = yield* select(balance)
+  const stringAddress = yield* select(address)
 
-  if (!walletAddress) {
+  if (!stringAddress) {
     return yield* put(
       snackbarsActions.add({
         message: 'Connect wallet to claim the faucet.',
@@ -72,8 +80,10 @@ export function* handleAirdrop(): Generator {
       })
     )
   }
-  //TODO check sage transaction fee
-  console.log(FAUCET_SAFE_TRANSACTION_FEE)
+  const walletAddress = yield* select(hexAddress)
+  const walletBalance = yield* select(balance)
+
+  //TODO check saga transaction fee
   if (FAUCET_SAFE_TRANSACTION_FEE > walletBalance) {
     return yield* put(
       snackbarsActions.add({
@@ -119,9 +129,6 @@ export function* handleAirdrop(): Generator {
 
       const mintTx = yield* call([grc20, grc20.mintTx], walletAddress, airdropAmount, address)
       txs.push(mintTx)
-
-      const approveTx = yield* call([grc20, grc20.approveTx], walletAddress, airdropAmount, address)
-      txs.push(approveTx)
     }
 
     yield put(
@@ -188,13 +195,16 @@ export function* init(isEagerConnect: boolean): Generator {
       )
     }
 
+    // if (accounts.length === 0) {
+    //   yield* put(actions.setStatus(Status.Error))
+    //   return
+    // }
     yield* put(actions.setAddress(accounts[0].address))
 
     const allTokens = yield* select(tokens)
     const tokensList = Object.keys(allTokens) as HexString[]
 
     yield* call(fetchBalances, tokensList)
-
     yield* put(actions.setStatus(Status.Initialized))
   } catch (error) {
     console.log(error)
