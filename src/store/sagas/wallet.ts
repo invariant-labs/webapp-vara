@@ -34,6 +34,11 @@ export function* getWallet(): SagaGenerator<NightlyConnectAdapter> {
   const wallet = yield* call(getVaraWallet)
   if (!wallet.connected) {
     yield* call([wallet, wallet.connect])
+
+    const accounts = yield* call([wallet.accounts, wallet.accounts.get])
+
+    yield* put(actions.setAddress(accounts[0].address))
+    yield* put(actions.setStatus(Status.Initialized))
   }
 
   return wallet
