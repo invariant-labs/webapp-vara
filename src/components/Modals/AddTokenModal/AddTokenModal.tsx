@@ -39,14 +39,14 @@ export const AddTokenModal: React.FC<IProps> = ({ open, handleClose, addToken })
           <Input
             classes={{ input: classes.input }}
             placeholder='Token address'
-            onChange={e => setAddress( decodeAddress(e.target.value) )}
+            onChange={e => setAddress(decodeAddress(e.target.value))}
             value={address}
             disableUnderline
           />
           <Button
             className={classes.add}
             onClick={() => {
-              if (address !== null){
+              if (address !== null) {
                 addToken(address)
                 setAddress(null)
               }

@@ -7,6 +7,7 @@ import { SwapToken } from '@store/selectors/wallet'
 import classNames from 'classnames'
 import React, { CSSProperties, useRef } from 'react'
 import useStyles from './style'
+import { HexString } from '@gear-js/api'
 
 interface IProps {
   setValue: (value: string) => void
@@ -19,12 +20,12 @@ interface IProps {
   onMaxClick: () => void
   current: SwapToken | null
   tokens: Record<string, SwapToken>
-  onSelect: (address: string) => void
+  onSelect: (address: HexString) => void
   disabled: boolean
   balance?: string
   hideBalances?: boolean
   handleAddToken: (address: string) => void
-  commonTokens: string[]
+  commonTokens: HexString[]
   limit?: number
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void

@@ -6,6 +6,7 @@ import { getCoinGeckoTokenPrice, getMockedTokenPrice, tickerToAddress } from '@u
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { Simulate, actions } from '@store/reducers/swap'
 import { actions as walletActions } from '@store/reducers/wallet'
+import { actions as poolsActions } from '@store/reducers/pools'
 import { networkType } from '@store/selectors/connection'
 import {
   isLoadingLatestPoolsForTransaction,
@@ -14,11 +15,11 @@ import {
 } from '@store/selectors/pools'
 import { simulateResult, swap as swapPool } from '@store/selectors/swap'
 import { balanceLoading, status, swapTokensDict } from '@store/selectors/wallet'
-
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { VariantType } from 'notistack'
+import { encodeAddress, HexString } from '@gear-js/api'
 
 type Props = {
   initialTokenFrom: string
@@ -39,7 +40,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const network = useSelector(networkType)
   const swapSimulateResult = useSelector(simulateResult)
-  // const api = apiSingleton.getInstance()
+  // const api = apiSingleton.getInstance(network)
   const [progress, setProgress] = useState<ProgressState>('none')
   const [tokenFrom, setTokenFrom] = useState<string | null>(null)
   const [tokenTo, setTokenTo] = useState<string | null>(null)
@@ -184,19 +185,19 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
     localStorage.setItem('INVARIANT_SWAP_SLIPPAGE', slippage)
   }
 
-  const onRefresh = (tokenFromAddress: string | null, tokenToAddress: string | null) => {
+  const onRefresh = (tokenFromAddress: HexString | null, tokenToAddress: HexString | null) => {
     if (tokenFromAddress === null || tokenToAddress == null) {
       return
     }
 
-    // dispatch(walletActions.getBalances([tokenFromAddress, tokenToAddress]))
+    dispatch(walletActions.getBalances([tokenFromAddress, tokenToAddress]))
 
-    // dispatch(
-    //   poolsActions.getAllPoolsForPairData({
-    //     first: tokenFromAddress,
-    //     second: tokenToAddress
-    //   })
-    // )
+    dispatch(
+      poolsActions.getAllPoolsForPairData({
+        first: tokenFromAddress,
+        second: tokenToAddress
+      })
+    )
 
     if (tokenTo === null || tokenFrom === null) {
       return
@@ -286,20 +287,20 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
         if (tokenTo !== null) {
           localStorage.setItem(`INVARIANT_LAST_TOKEN_TO_${network}`, tokenTo.toString())
         }
-        // if (
-        //   tokenFrom !== null &&
-        //   tokenTo !== null &&
-        //   tokenFrom !== tokenTo &&
-        //   tokenFrom !== '-' &&
-        //   tokenTo !== '-'
-        // ) {
-        //   dispatch(
-        //     poolsActions.getAllPoolsForPairData({
-        //       first: tokenFrom,
-        //       second: tokenTo
-        //     })
-        //   )
-        // }
+        if (
+          tokenFrom !== null &&
+          tokenTo !== null &&
+          tokenFrom !== tokenTo &&
+          encodeAddress(tokenFrom) !== '-' &&
+          encodeAddress(tokenTo) !== '-'
+        ) {
+          dispatch(
+            poolsActions.getAllPoolsForPairData({
+              first: tokenFrom,
+              second: tokenTo
+            })
+          )
+        }
       }}
       onConnectWallet={async () => {
         await openWalletSelectorModal()
