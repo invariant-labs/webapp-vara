@@ -83,7 +83,6 @@ export function* handleAirdrop(): Generator {
   const walletAddress = yield* select(hexAddress)
   const walletBalance = yield* select(balance)
 
-  //TODO check saga transaction fee
   if (FAUCET_SAFE_TRANSACTION_FEE > walletBalance) {
     return yield* put(
       snackbarsActions.add({
@@ -117,7 +116,7 @@ export function* handleAirdrop(): Generator {
     )
 
     const api = yield* getApi()
-    // const walletAdapter = yield* getWallet()
+
     const grc20 = yield* getGRC20()
 
     grc20.setAdmin(deployerAccount)

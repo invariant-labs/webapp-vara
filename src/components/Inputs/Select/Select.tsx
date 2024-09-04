@@ -17,7 +17,7 @@ export interface ISelectModal {
   onSelect: (address: HexString) => void
   className?: string
   hideBalancesInModal?: boolean
-  handleAddToken: (address: string) => void
+  handleAddToken: (address: HexString) => void
   sliceName?: boolean
   commonTokens: HexString[]
   initialHideUnknownTokensValue: boolean

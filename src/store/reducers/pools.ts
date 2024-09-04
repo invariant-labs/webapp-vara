@@ -120,7 +120,7 @@ const poolsSlice = createSlice({
   name: poolsSliceName,
   initialState: defaultState,
   reducers: {
-    addTokens(state, action: PayloadAction<Record<string, Token>>) {
+    addTokens(state, action: PayloadAction<Record<HexString, Token>>) {
       state.tokens = {
         ...state.tokens,
         ...action.payload

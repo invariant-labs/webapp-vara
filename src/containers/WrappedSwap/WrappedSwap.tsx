@@ -2,7 +2,13 @@ import { ProgressState } from '@components/AnimatedButton/AnimatedButton'
 import { Swap } from '@components/Swap/Swap'
 import { commonTokensForNetworks, DEFAULT_SWAP_SLIPPAGE } from '@store/consts/static'
 import { TokenPriceData } from '@store/consts/types'
-import { getCoinGeckoTokenPrice, getMockedTokenPrice, tickerToAddress } from '@utils/utils'
+import {
+  addNewTokenToLocalStorage,
+  getCoinGeckoTokenPrice,
+  getMockedTokenPrice,
+  getNewTokenOrThrow,
+  tickerToAddress
+} from '@utils/utils'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { Simulate, actions } from '@store/reducers/swap'
 import { actions as walletActions } from '@store/reducers/wallet'
@@ -14,12 +20,14 @@ import {
   tickMaps
 } from '@store/selectors/pools'
 import { simulateResult, swap as swapPool } from '@store/selectors/swap'
-import { balanceLoading, status, swapTokensDict } from '@store/selectors/wallet'
+import { balanceLoading, hexAddress, status, swapTokensDict } from '@store/selectors/wallet'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { VariantType } from 'notistack'
 import { encodeAddress, HexString } from '@gear-js/api'
+import apiSingleton from '@store/services/apiSingleton'
+import grc20Singleton from '@store/services/grc20Singleton'
 
 type Props = {
   initialTokenFrom: string
@@ -29,7 +37,7 @@ type Props = {
 export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const dispatch = useDispatch()
 
-  // const walletAddress = useSelector(address)
+  const walletAddress = useSelector(hexAddress)
   const walletStatus = useSelector(status)
   const swap = useSelector(swapPool)
   const tickmap = useSelector(tickMaps)
@@ -40,7 +48,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const network = useSelector(networkType)
   const swapSimulateResult = useSelector(simulateResult)
-  // const api = apiSingleton.getInstance(network)
+
   const [progress, setProgress] = useState<ProgressState>('none')
   const [tokenFrom, setTokenFrom] = useState<HexString | null>(null)
   const [tokenTo, setTokenTo] = useState<HexString | null>(null)
@@ -88,40 +96,43 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       ? tickerToAddress(initialTokenTo)
       : localStorage.getItem(`INVARIANT_LAST_TOKEN_TO_${network}`)
 
-  const addTokenHandler = async () => {
-    // const psp22 = SingletonPSP22.getInstance()
-    // if (psp22 && api !== null && !tokensDict[address]) {
-    //   getNewTokenOrThrow(address, psp22, walletAddress)
-    //     .then(data => {
-    //       dispatch(poolsActions.addTokens(data))
-    //       dispatch(walletActions.getBalances(Object.keys(data)))
-    //       addNewTokenToLocalStorage(address, network)
-    //       dispatch(
-    //         snackbarsActions.add({
-    //           message: 'Token added.',
-    //           variant: 'success',
-    //           persist: false
-    //         })
-    //       )
-    //     })
-    //     .catch(() => {
-    //       dispatch(
-    //         snackbarsActions.add({
-    //           message: 'Token add failed.',
-    //           variant: 'error',
-    //           persist: false
-    //         })
-    //       )
-    //     })
-    // } else {
-    //   dispatch(
-    //     snackbarsActions.add({
-    //       message: 'Token already in list.',
-    //       variant: 'info',
-    //       persist: false
-    //     })
-    //   )
-    // }
+  const addTokenHandler = async (address: HexString) => {
+    const grc20 = await grc20Singleton.getInstance()
+    const api = await apiSingleton.loadInstance(network)
+    if (grc20 && api !== null && !tokensDict[walletAddress]) {
+      getNewTokenOrThrow(address, grc20, walletAddress)
+        .then(data => {
+          console.log(data)
+          console.log(Object.keys(data))
+          dispatch(poolsActions.addTokens(data))
+          dispatch(walletActions.getBalances(Object.keys(data) as HexString[]))
+          addNewTokenToLocalStorage(address, network)
+          dispatch(
+            snackbarsActions.add({
+              message: 'Token added.',
+              variant: 'success',
+              persist: false
+            })
+          )
+        })
+        .catch(() => {
+          dispatch(
+            snackbarsActions.add({
+              message: 'Token add failed.',
+              variant: 'error',
+              persist: false
+            })
+          )
+        })
+    } else {
+      dispatch(
+        snackbarsActions.add({
+          message: 'Token already in list.',
+          variant: 'info',
+          persist: false
+        })
+      )
+    }
   }
 
   const initialHideUnknownTokensValue =

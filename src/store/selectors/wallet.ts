@@ -17,8 +17,8 @@ export const { address, balance, tokensBalances, status, balanceLoading } = keyS
 
 export const tokenBalance = (tokenAddress: string) =>
   createSelector(tokensBalances, tokensAccounts => {
-    if (tokensAccounts[tokenAddress.toString()]) {
-      return tokensAccounts[tokenAddress.toString()]
+    if (tokensAccounts[tokenAddress]) {
+      return tokensAccounts[tokenAddress]
     }
   })
 
@@ -48,7 +48,7 @@ export const swapTokens = createSelector(tokensBalances, tokens, balance, (allAc
     //   token.address.toString() === TESTNET_WAZERO_ADDRESS
     //     ? BigInt(Math.max(Number(a0Balance - SWAP_SAFE_TRANSACTION_FEE), 0))
     //     : allAccounts[token.address.toString()]?.balance ?? 0n
-    balance: allAccounts[token.address.toString()]?.balance ?? 0n
+    balance: allAccounts[token.address]?.balance ?? 0n
   }))
 })
 
@@ -60,7 +60,7 @@ export const poolTokens = createSelector(tokensBalances, tokens, balance, (allAc
     //   token.address.toString() === TESTNET_WAZERO_ADDRESS
     //     ? BigInt(Math.max(Number(a0Balance - POOL_SAFE_TRANSACTION_FEE), 0))
     //     : allAccounts[token.address.toString()]?.balance ?? 0n
-    balance: allAccounts[token.address.toString()]?.balance ?? 0n
+    balance: allAccounts[token.address]?.balance ?? 0n
   }))
 })
 
@@ -78,7 +78,7 @@ export const swapTokensDict = createSelector(
         //   val.address.toString() === TESTNET_WAZERO_ADDRESS
         //     ? BigInt(a0Balance)
         //     : allAccounts[val.address.toString()]?.balance ?? BigInt(0)
-        balance: allAccounts[val.address.toString()]?.balance ?? BigInt(0)
+        balance: allAccounts[val.address]?.balance ?? BigInt(0)
       }
     })
 
@@ -88,7 +88,7 @@ export const swapTokensDict = createSelector(
 
 export const hexAddress = createSelector(
   address,
-  (addressString: string): HexString => decodeAddress(addressString)
+  (addressString: string): HexString => (addressString ? decodeAddress(addressString) : '0x')
 )
 
 export type TokenBalances = ITokenBalance & {

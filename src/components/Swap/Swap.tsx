@@ -81,7 +81,7 @@ export interface ISwap {
   onDisconnectWallet: () => void
   initialTokenFrom: string | null
   initialTokenTo: string | null
-  handleAddToken: (address: string) => void
+  handleAddToken: (address: HexString) => void
   commonTokens: HexString[]
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void

@@ -84,7 +84,7 @@ export interface INewPosition {
   currentPairReversed: boolean | null
   bestTiers: BestTier[]
   currentPriceSqrt: bigint
-  handleAddToken: (address: string) => void
+  handleAddToken: (address: HexString) => void
   commonTokens: HexString[]
   initialOpeningPositionMethod: PositionOpeningMethod
   onPositionOpeningMethodChange: (val: PositionOpeningMethod) => void

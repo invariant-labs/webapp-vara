@@ -49,7 +49,7 @@ export interface IDepositSelector {
   onReverseTokens: () => void
   poolIndex: number | null
   bestTierIndex?: number
-  handleAddToken: (address: string) => void
+  handleAddToken: (address: HexString) => void
   commonTokens: HexString[]
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void
