@@ -42,8 +42,8 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const swapSimulateResult = useSelector(simulateResult)
   // const api = apiSingleton.getInstance(network)
   const [progress, setProgress] = useState<ProgressState>('none')
-  const [tokenFrom, setTokenFrom] = useState<string | null>(null)
-  const [tokenTo, setTokenTo] = useState<string | null>(null)
+  const [tokenFrom, setTokenFrom] = useState<HexString | null>(null)
+  const [tokenTo, setTokenTo] = useState<HexString | null>(null)
 
   useEffect(() => {
     let timeoutId1: NodeJS.Timeout

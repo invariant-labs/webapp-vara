@@ -68,8 +68,8 @@ export interface ISwap {
     poolKey: PoolKey,
     slippage: bigint,
     knownPrice: Price,
-    tokenFrom: string,
-    tokenTo: string,
+    tokenFrom: HexString,
+    tokenTo: HexString,
     amountIn: bigint,
     amountOut: bigint,
     byAmountIn: boolean
