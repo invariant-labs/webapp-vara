@@ -1,4 +1,4 @@
-import { PoolKey } from '@invariant-labs/vara-sdk'
+import { HexString, PoolKey } from '@invariant-labs/vara-sdk'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { PayloadType, SimulateResult } from '@store/consts/types'
 
@@ -17,8 +17,8 @@ export interface Swap {
 }
 
 export interface Simulate {
-  fromToken: string
-  toToken: string
+  fromToken: HexString
+  toToken: HexString
   amount: bigint
   byAmountIn: boolean
 }

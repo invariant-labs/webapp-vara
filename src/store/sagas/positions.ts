@@ -12,8 +12,10 @@ import {
 import { FetchTicksAndTickMaps, ListType, actions as poolsActions } from '@store/reducers/pools'
 import { actions as walletActions } from '@store/reducers/wallet'
 import {
+  ClosePositionData,
   GetCurrentTicksData,
   GetPositionTicks,
+  HandleClaimFee,
   InitPositionData,
   actions
 } from '@store/reducers/positions'
@@ -30,10 +32,10 @@ import {
   batchTxs,
   calculateTokenAmountsWithSlippage
 } from '@invariant-labs/vara-sdk/target/utils'
-import { EMPTY_POSITION, POSITIONS_PER_QUERY } from '@store/consts/static'
+import { EMPTY_POSITION, ErrorMessage, POSITIONS_PER_QUERY } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
 import { Pool, Position, Tick } from '@invariant-labs/vara-sdk'
-import { getWallet } from './wallet'
+import { fetchBalances, getWallet } from './wallet'
 
 // export function getWithdrawAllWAZEROTxs(
 //   invariant: Invariant,
@@ -117,7 +119,11 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       })
     )
 
-    yield* call(batchTxs, api, hexWalletAddress, [XTokenTx, YTokenTx, depositTx])
+    try {
+      yield* call(batchTxs, api, hexWalletAddress, [XTokenTx, YTokenTx, depositTx])
+    } catch (e) {
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
 
     const txs = []
 
@@ -143,7 +149,11 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
 
     txs.push(tx)
 
-    yield* call(batchTxs, api, hexWalletAddress, txs)
+    try {
+      yield* call(batchTxs, api, hexWalletAddress, txs)
+    } catch (e) {
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
 
     closeSnackbar(loaderSigningTx)
     yield put(snackbarsActions.remove(loaderSigningTx))
@@ -305,7 +315,101 @@ export function* handleGetCurrentPlotTicks(action: PayloadAction<GetCurrentTicks
   }
 }
 
-export function* handleClaimFee() {}
+export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
+  const { index, addressTokenX, addressTokenY } = action.payload
+
+  const loaderKey = createLoaderKey()
+  const loaderSigningTx = createLoaderKey()
+  const walletAddress = yield* select(hexAddress)
+  try {
+    yield put(
+      snackbarsActions.add({
+        message: 'Claiming fee...',
+        variant: 'pending',
+        persist: true,
+        key: loaderKey
+      })
+    )
+
+    const adapter = yield* call(getWallet)
+
+    const api = yield* getApi()
+    const invariant = yield* getInvariant()
+
+    api.setSigner(adapter.signer as any)
+
+    const claimTx = yield* call([invariant, invariant.claimFeeTx], index)
+
+    yield put(
+      snackbarsActions.add({
+        message: 'Signing transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderSigningTx
+      })
+    )
+
+    // if (addressTokenX === wazeroAddress || addressTokenY === wazeroAddress) {
+    //   txs = [...txs, ...getWithdrawAllWAZEROTxs(invariant, psp22, invAddress, wazeroAddress)]
+    // }
+
+    try {
+      const txId = yield* call(batchTxs, api, walletAddress, [claimTx])
+
+      console.log(txId.toString())
+    } catch (e) {
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
+
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+
+    closeSnackbar(loaderKey)
+    yield put(snackbarsActions.remove(loaderKey))
+    yield put(
+      snackbarsActions.add({
+        message: 'Fee claimed.',
+        variant: 'success',
+        persist: false
+        // txid: txResult.hash
+      })
+    )
+
+    yield put(actions.getSinglePosition(index))
+
+    yield* call(fetchBalances, [addressTokenY, addressTokenX])
+  } catch (e: any) {
+    if (e.failedTxs) {
+      console.log(e.failedTxs)
+    }
+
+    const error = ensureError(e)
+    console.log(error)
+
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+    closeSnackbar(loaderKey)
+    yield put(snackbarsActions.remove(loaderKey))
+
+    if (isErrorMessage(error.message)) {
+      yield put(
+        snackbarsActions.add({
+          message: error.message,
+          variant: 'error',
+          persist: false
+        })
+      )
+    } else {
+      yield put(
+        snackbarsActions.add({
+          message: 'Failed to claim fee. Please try again.',
+          variant: 'error',
+          persist: false
+        })
+      )
+    }
+  }
+}
 
 export function* handleGetSinglePosition(action: PayloadAction<bigint>) {
   try {
@@ -340,7 +444,124 @@ export function* handleGetSinglePosition(action: PayloadAction<bigint>) {
   }
 }
 
-export function* handleClosePosition() {}
+export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
+  const { addressTokenX, addressTokenY, onSuccess, positionIndex } = action.payload
+
+  const loaderKey = createLoaderKey()
+  const loaderSigningTx = createLoaderKey()
+
+  try {
+    yield put(
+      snackbarsActions.add({
+        message: 'Closing position...',
+        variant: 'pending',
+        persist: true,
+        key: loaderKey
+      })
+    )
+
+    const walletAddress = yield* select(hexAddress)
+    const adapter = yield* call(getWallet)
+    const allPositions = yield* select(positionsList)
+    const api = yield* getApi()
+    const invariant = yield* getInvariant()
+
+    api.setSigner(adapter.signer as any)
+
+    const getPositionsListPagePayload: PayloadAction<{ index: number; refresh: boolean }> = {
+      type: actions.getPositionsListPage.type,
+      payload: {
+        index: Math.floor(Number(allPositions.length) / POSITIONS_PER_QUERY),
+        refresh: false
+      }
+    }
+
+    const fetchTask = yield* fork(handleGetPositionsListPage, getPositionsListPagePayload)
+    yield* join(fetchTask)
+
+    const removePositionTx = yield* call([invariant, invariant.removePositionTx], positionIndex)
+
+    yield put(
+      snackbarsActions.add({
+        message: 'Signing transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderSigningTx
+      })
+    )
+
+    try {
+      const txId = yield* call(batchTxs, api, walletAddress, [removePositionTx])
+
+      console.log(txId.toString())
+    } catch (e: any) {
+      if (e.failedTxs) {
+        console.log(e.failedTxs)
+      }
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
+
+    // let signedBatchedTx: SubmittableExtrinsic
+    // try {
+    //   signedBatchedTx = yield* call([batchedTx, batchedTx.signAsync], walletAddress, {
+    //     signer: adapter.signer as Signer
+    //   })
+    // } catch (e) {
+    //   throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    // }
+    console.log(7)
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+
+    // const txResult = yield* call(sendTx, signedBatchedTx)
+
+    closeSnackbar(loaderKey)
+    yield put(snackbarsActions.remove(loaderKey))
+    yield put(
+      snackbarsActions.add({
+        message: 'Position closed.',
+        variant: 'success',
+        persist: false
+        // txid: txResult.hash
+      })
+    )
+
+    yield* put(actions.removePosition(positionIndex))
+    onSuccess()
+
+    yield* call(fetchBalances, [addressTokenX, addressTokenY])
+  } catch (e: any) {
+    if (e.failedTxs) {
+      console.log(e.failedTxs)
+    }
+
+    const error = ensureError(e)
+    console.log(error)
+
+    closeSnackbar(loaderSigningTx)
+    yield put(snackbarsActions.remove(loaderSigningTx))
+    closeSnackbar(loaderKey)
+    yield put(snackbarsActions.remove(loaderKey))
+
+    if (isErrorMessage(error.message)) {
+      yield put(
+        snackbarsActions.add({
+          message: error.message,
+          variant: 'error',
+          persist: false
+        })
+      )
+    } else {
+      yield put(
+        snackbarsActions.add({
+          message: 'Failed to close position. Please try again.',
+          variant: 'error',
+          persist: false
+        })
+      )
+    }
+  }
+}
 
 export function* handleGetRemainingPositions(): Generator {
   const walletAddress = yield* select(hexAddress)

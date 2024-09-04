@@ -1,4 +1,4 @@
-import { PoolKey, Position, Tick } from '@invariant-labs/vara-sdk'
+import { HexString, PoolKey, Position, Tick } from '@invariant-labs/vara-sdk'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { PayloadType } from '@store/consts/types'
 
@@ -66,8 +66,8 @@ export interface ClosePositionData {
   positionIndex: bigint
   claimFarmRewards?: boolean
   onSuccess: () => void
-  addressTokenX: string
-  addressTokenY: string
+  addressTokenX: HexString
+  addressTokenY: HexString
 }
 
 export interface SetPositionData {
@@ -83,8 +83,8 @@ export interface GetPositionTicks {
 
 export interface HandleClaimFee {
   index: bigint
-  addressTokenX: string
-  addressTokenY: string
+  addressTokenX: HexString
+  addressTokenY: HexString
 }
 
 export const defaultState: IPositionsStore = {

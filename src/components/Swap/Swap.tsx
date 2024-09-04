@@ -3,7 +3,7 @@ import ChangeWalletButton from '@components/Header/HeaderButton/ChangeWalletButt
 import ExchangeAmountInput from '@components/Inputs/ExchangeAmountInput/ExchangeAmountInput'
 import Slippage from '@components/Modals/Slippage/Slippage'
 import Refresher from '@components/Refresher/Refresher'
-import { PoolKey, Price } from '@invariant-labs/vara-sdk'
+import { HexString, PoolKey, Price } from '@invariant-labs/vara-sdk'
 import { PERCENTAGE_DENOMINATOR } from '@invariant-labs/vara-sdk/target/consts'
 import { Box, Button, Grid, Typography } from '@mui/material'
 import refreshIcon from '@static/svg/refresh.svg'
@@ -34,6 +34,7 @@ import TokensInfo from './TokensInfo/TokensInfo'
 import { VariantType } from 'notistack'
 import { useNavigate } from 'react-router-dom'
 import { TooltipHover } from '@components/TooltipHover/TooltipHover'
+import { decodeAddress } from '@gear-js/api'
 
 export interface Pools {
   tokenX: string
@@ -57,7 +58,7 @@ export interface Pools {
 
 export interface ISwap {
   isFetchingNewPool: boolean
-  onRefresh: (tokenFromAddress: string | null, tokenToAddress: string | null) => void
+  onRefresh: (tokenFromAddress: HexString | null, tokenToAddress: HexString | null) => void
   walletStatus: Status
   swapData: SwapData
   tokens: Record<string, SwapToken>
@@ -73,7 +74,7 @@ export interface ISwap {
     amountOut: bigint,
     byAmountIn: boolean
   ) => void
-  onSetPair: (tokenFrom: string | null, tokenTo: string | null) => void
+  onSetPair: (tokenFrom: HexString | null, tokenTo: HexString | null) => void
   progress: ProgressState
   isWaitingForNewPool: boolean
   onConnectWallet: () => void
@@ -81,7 +82,7 @@ export interface ISwap {
   initialTokenFrom: string | null
   initialTokenTo: string | null
   handleAddToken: (address: string) => void
-  commonTokens: string[]
+  commonTokens: HexString[]
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void
   tokenFromPriceData?: TokenPriceData
@@ -133,8 +134,8 @@ export const Swap: React.FC<ISwap> = ({
     FROM = 'from',
     TO = 'to'
   }
-  const [tokenFrom, setTokenFrom] = React.useState<string | null>(null)
-  const [tokenTo, setTokenTo] = React.useState<string | null>(null)
+  const [tokenFrom, setTokenFrom] = React.useState<HexString | null>(null)
+  const [tokenTo, setTokenTo] = React.useState<HexString | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [lockAnimation, setLockAnimation] = React.useState<boolean>(false)
   const [amountFrom, setAmountFrom] = React.useState<string>('')
@@ -169,8 +170,8 @@ export const Swap: React.FC<ISwap> = ({
     if (Object.keys(tokens).length && tokenFrom === null && tokenTo === null) {
       const firstCommonToken = commonTokens[0] || null
 
-      setTokenFrom(initialTokenFrom !== null ? initialTokenFrom : firstCommonToken)
-      setTokenTo(initialTokenTo)
+      setTokenFrom(initialTokenFrom !== null ? decodeAddress(initialTokenFrom) : firstCommonToken)
+      setTokenTo(initialTokenTo !== null ? decodeAddress(initialTokenTo) : '0x')
     }
   }, [Object.keys(tokens).length])
 
