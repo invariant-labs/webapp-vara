@@ -104,8 +104,6 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       calculatedAmountIn
     )
 
-    // await invariant.depositSingleToken(admin, poolKey.tokenX, amount)
-
     yield put(
       snackbarsActions.add({
         message: 'Signing transaction...',
@@ -171,7 +169,10 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
         second: tokenTo
       })
     )
-  } catch (e: unknown) {
+  } catch (e: any) {
+    if (e.failedTxs) {
+      console.log(e.failedTxs)
+    }
     const error = ensureError(e)
     console.log(error)
 
