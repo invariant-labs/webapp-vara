@@ -25,7 +25,7 @@ import { openWalletSelectorModal } from '@utils/web3/selector'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { VariantType } from 'notistack'
-import { encodeAddress, HexString } from '@gear-js/api'
+import { HexString } from '@gear-js/api'
 import apiSingleton from '@store/services/apiSingleton'
 import grc20Singleton from '@store/services/grc20Singleton'
 
@@ -302,8 +302,8 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
           tokenFrom !== null &&
           tokenTo !== null &&
           tokenFrom !== tokenTo &&
-          encodeAddress(tokenFrom) !== '-' &&
-          encodeAddress(tokenTo) !== '-'
+          tokenFrom !== '0x' &&
+          tokenTo !== '0x'
         ) {
           dispatch(
             poolsActions.getAllPoolsForPairData({
