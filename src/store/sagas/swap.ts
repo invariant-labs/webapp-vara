@@ -128,7 +128,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       estimatedPriceAfterSwap,
       slippage
     )
-    88019658237862
+
     // if ((!xToY && poolKey.tokenX === wazeroAddress) || (xToY && poolKey.tokenY === wazeroAddress)) {
     //   const withdrawTx = wazero.withdrawTx(amountOut, WAZERO_WITHDRAW_OPTIONS)
     //   txs.push(withdrawTx)
@@ -138,8 +138,14 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     //   txs = [...txs, ...getWithdrawAllWAZEROTxs(invariant, psp22, invAddress, wazeroAddress)]
     // }
 
+    const withdrawTx = yield* call(
+      [invariant, invariant.withdrawTokenPairTx],
+      [tokenFrom, null] as [ActorId, bigint | null],
+      [tokenTo, null] as [ActorId, bigint | null]
+    )
+
     try {
-      yield* call(batchTxs, api, walletAddress, [swapTx])
+      yield* call(batchTxs, api, walletAddress, [swapTx, withdrawTx])
     } catch (e) {
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
@@ -209,6 +215,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     )
   }
 }
+
 export enum SwapError {
   InsufficientLiquidity,
   AmountIsZero,

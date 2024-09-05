@@ -149,6 +149,14 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
 
     txs.push(tx)
 
+    const withdrawTx = yield* call(
+      [invariant, invariant.withdrawTokenPairTx],
+      [poolKeyData.tokenX, null] as [ActorId, bigint | null],
+      [poolKeyData.tokenY, null] as [ActorId, bigint | null]
+    )
+
+    txs.push(withdrawTx)
+
     try {
       yield* call(batchTxs, api, hexWalletAddress, txs)
     } catch (e) {
@@ -353,8 +361,14 @@ export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
     //   txs = [...txs, ...getWithdrawAllWAZEROTxs(invariant, psp22, invAddress, wazeroAddress)]
     // }
 
+    const withdrawTx = yield* call(
+      [invariant, invariant.withdrawTokenPairTx],
+      [addressTokenX, null] as [ActorId, bigint | null],
+      [addressTokenY, null] as [ActorId, bigint | null]
+    )
+
     try {
-      const txId = yield* call(batchTxs, api, walletAddress, [claimTx])
+      const txId = yield* call(batchTxs, api, walletAddress, [claimTx, withdrawTx])
 
       console.log(txId.toString())
     } catch (e) {
@@ -481,6 +495,12 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
 
     const removePositionTx = yield* call([invariant, invariant.removePositionTx], positionIndex)
 
+    const withdrawTx = yield* call(
+      [invariant, invariant.withdrawTokenPairTx],
+      [addressTokenX, null] as [ActorId, bigint | null],
+      [addressTokenY, null] as [ActorId, bigint | null]
+    )
+
     yield put(
       snackbarsActions.add({
         message: 'Signing transaction...',
@@ -491,7 +511,7 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
     )
 
     try {
-      const txId = yield* call(batchTxs, api, walletAddress, [removePositionTx])
+      const txId = yield* call(batchTxs, api, walletAddress, [removePositionTx, withdrawTx])
 
       console.log(txId.toString())
     } catch (e: any) {
