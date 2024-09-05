@@ -73,6 +73,13 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
   const loaderCreatePosition = createLoaderKey()
   const loaderSigningTx = createLoaderKey()
 
+  const hexWalletAddress = yield* select(hexAddress)
+  const adapter = yield* call(getWallet)
+  const invAddress = yield* select(invariantAddress)
+  const grc20 = yield* getGRC20()
+  const api = yield* getApi()
+  const invariant = yield* getInvariant()
+
   try {
     yield put(
       snackbarsActions.add({
@@ -82,12 +89,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         key: loaderCreatePosition
       })
     )
-    const hexWalletAddress = yield* select(hexAddress)
-    const adapter = yield* call(getWallet)
-    const invAddress = yield* select(invariantAddress)
-    const grc20 = yield* getGRC20()
-    const api = yield* getApi()
-    const invariant = yield* getInvariant()
 
     api.setSigner(adapter.signer as any)
 
@@ -100,15 +101,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       slippageTolerance,
       true
     )
-    const XTokenTx = yield* call([grc20, grc20.approveTx], invAddress, xAmountWithSlippage, tokenX)
-
-    const YTokenTx = yield* call([grc20, grc20.approveTx], invAddress, yAmountWithSlippage, tokenY)
-
-    const depositTx = yield* call(
-      [invariant, invariant.depositTokenPairTx],
-      [poolKeyData.tokenX, xAmountWithSlippage] as [ActorId, bigint],
-      [poolKeyData.tokenY, yAmountWithSlippage] as [ActorId, bigint]
-    )
 
     yield put(
       snackbarsActions.add({
@@ -117,6 +109,16 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         persist: true,
         key: loaderSigningTx
       })
+    )
+
+    const XTokenTx = yield* call([grc20, grc20.approveTx], invAddress, xAmountWithSlippage, tokenX)
+
+    const YTokenTx = yield* call([grc20, grc20.approveTx], invAddress, yAmountWithSlippage, tokenY)
+
+    const depositTx = yield* call(
+      [invariant, invariant.depositTokenPairTx],
+      [poolKeyData.tokenX, xAmountWithSlippage] as [ActorId, bigint],
+      [poolKeyData.tokenY, yAmountWithSlippage] as [ActorId, bigint]
     )
 
     try {
@@ -149,20 +151,11 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
 
     txs.push(tx)
 
-    const withdrawTx = yield* call(
-      [invariant, invariant.withdrawTokenPairTx],
-      [poolKeyData.tokenX, null] as [ActorId, bigint | null],
-      [poolKeyData.tokenY, null] as [ActorId, bigint | null]
-    )
-
-    txs.push(withdrawTx)
-
     try {
       yield* call(batchTxs, api, hexWalletAddress, txs)
     } catch (e) {
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
-
     closeSnackbar(loaderSigningTx)
     yield put(snackbarsActions.remove(loaderSigningTx))
 
@@ -216,6 +209,37 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         })
       )
     }
+    const userBalances = yield* call([invariant, invariant.getUserBalances], hexWalletAddress)
+
+    if (userBalances.size === 0) {
+      return
+    }
+    const loaderWithdrawTokens = createLoaderKey()
+
+    const withdrawTx = yield* call(
+      [invariant, invariant.withdrawTokenPairTx],
+      [poolKeyData.tokenX, null] as [ActorId, bigint | null],
+      [poolKeyData.tokenY, null] as [ActorId, bigint | null]
+    )
+
+    yield put(
+      snackbarsActions.add({
+        message: 'Withdrawing tokens from transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderWithdrawTokens
+      })
+    )
+
+    try {
+      yield* call(batchTxs, api, hexWalletAddress, [withdrawTx])
+      yield put(walletActions.getBalances([tokenX, tokenY]))
+    } catch (e) {
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
+
+    closeSnackbar(loaderWithdrawTokens)
+    yield put(snackbarsActions.remove(loaderWithdrawTokens))
   }
 }
 
