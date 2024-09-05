@@ -6,8 +6,8 @@ export interface Swap {
   poolKey: PoolKey | null
   slippage: bigint
   estimatedPriceAfterSwap: bigint
-  tokenFrom: string
-  tokenTo: string
+  tokenFrom: HexString
+  tokenTo: HexString
   amountIn: bigint
   byAmountIn: boolean
   txid?: string
@@ -33,8 +33,8 @@ export const defaultState: ISwapStore = {
     poolKey: null,
     slippage: 0n,
     estimatedPriceAfterSwap: 0n,
-    tokenFrom: '',
-    tokenTo: '',
+    tokenFrom: '0x',
+    tokenTo: '0x',
     amountIn: 0n,
     byAmountIn: false,
     amountOut: 0n
@@ -66,7 +66,7 @@ const swapSlice = createSlice({
       state.swap.success = action.payload
       return state
     },
-    setPair(state, action: PayloadAction<{ tokenFrom: string; tokenTo: string }>) {
+    setPair(state, action: PayloadAction<{ tokenFrom: HexString; tokenTo: HexString }>) {
       state.swap.tokenFrom = action.payload.tokenFrom
       state.swap.tokenTo = action.payload.tokenTo
       return state

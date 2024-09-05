@@ -11,7 +11,12 @@ import { all, call, put, select, spawn, takeEvery, takeLatest } from 'typed-redu
 import { MAX_POOL_KEYS_RETURNED } from '@invariant-labs/vara-sdk/target/consts'
 import { getGRC20, getInvariant } from './connection'
 import { hexAddress } from '@store/selectors/wallet'
-import { findPairs, getPoolsByPoolKeys } from '@utils/utils'
+import {
+  findPairs,
+  getPoolsByPoolKeys,
+  getTokenBalances,
+  getTokenDataByAddresses
+} from '@utils/utils'
 import { tokens } from '@store/selectors/pools'
 
 export function* fetchPoolsDataForList(action: PayloadAction<ListPoolsRequest>) {
@@ -32,16 +37,16 @@ export function* fetchPoolsDataForList(action: PayloadAction<ListPoolsRequest>) 
     )
   )
 
-  // const unknownTokensData = yield* call(
-  //   getTokenDataByAddresses,
-  //   [...unknownTokens],
-  //   psp22,
-  //   walletAddress
-  // )
-  // const knownTokenBalances = yield* call(getTokenBalances, [...knownTokens], psp22, walletAddress)
+  const unknownTokensData = yield* call(
+    getTokenDataByAddresses,
+    [...unknownTokens],
+    grc20,
+    walletAddress
+  )
+  const knownTokenBalances = yield* call(getTokenBalances, [...knownTokens], grc20, walletAddress)
 
-  // yield* put(actions.addTokens(unknownTokensData))
-  // yield* put(actions.updateTokenBalances(knownTokenBalances))
+  yield* put(actions.addTokens(unknownTokensData))
+  yield* put(actions.updateTokenBalances(knownTokenBalances))
 
   yield* put(actions.addPoolsForList({ data: pools, listType: action.payload.listType }))
 }

@@ -62,6 +62,7 @@ import {
   Token,
   TokenPriceData
 } from '@store/consts/types'
+import icons from '@static/icons'
 export const createLoaderKey = () => (new Date().getMilliseconds() + Math.random()).toString()
 
 export const getInvariantAddress = (network: Network): string | null => {
@@ -354,13 +355,42 @@ export const parseFeeToPathFee = (fee: bigint): string => {
   return parsedFee.slice(0, parsedFee.length - 2) + '_' + parsedFee.slice(parsedFee.length - 2)
 }
 
-export const getTokenDataByAddresses = async () => {}
+export const getTokenDataByAddresses = async (
+  tokens: HexString[],
+  grc20: FungibleToken,
+  walletAddress: HexString
+): Promise<Record<HexString, Token>> => {
+  const promises = tokens.flatMap(token => {
+    return [
+      grc20.symbol(token),
+      grc20.name(token),
+      grc20.decimals(token),
+      grc20.balanceOf(walletAddress, token)
+    ]
+  })
+  const results = await Promise.all(promises)
+
+  const newTokens: Record<string, Token> = {}
+  tokens.forEach((token, index) => {
+    const baseIndex = index * 4
+    newTokens[token] = {
+      symbol: results[baseIndex] ? (results[baseIndex] as string) : 'UNKNOWN',
+      address: token,
+      name: results[baseIndex + 1] ? (results[baseIndex + 1] as string) : '',
+      decimals: results[baseIndex + 2] as bigint,
+      balance: results[baseIndex + 3] as bigint,
+      logoURI: icons.unknownToken,
+      isUnknown: true
+    }
+  })
+  return newTokens
+}
 
 export const getTokenBalances = async (
   tokens: HexString[],
   grc20: FungibleToken,
   address: ActorId
-): Promise<[string, bigint][]> => {
+): Promise<[HexString, bigint][]> => {
   const promises: Promise<bigint>[] = []
   tokens.map(token => {
     promises.push(grc20.balanceOf(address, token))
@@ -368,7 +398,7 @@ export const getTokenBalances = async (
 
   const results = await Promise.all(promises)
 
-  const tokenBalances: [string, bigint][] = []
+  const tokenBalances: [HexString, bigint][] = []
   tokens.map((token, index) => {
     tokenBalances.push([token, results[index]])
   })
@@ -402,16 +432,16 @@ export const poolKeyToString = (poolKey: PoolKey): string => {
   )
 }
 
-export const getNetworkTokensList = (networkType: Network): Record<string, Token> => {
+export const getNetworkTokensList = (networkType: Network): Record<HexString, Token> => {
   switch (networkType) {
     case Network.Mainnet: {
       return {}
     }
     case Network.Testnet:
       return {
-        [USDC.address.toString()]: USDC,
-        [BTC.address.toString()]: BTC,
-        [ETH.address.toString()]: ETH
+        [USDC.address]: USDC,
+        [BTC.address]: BTC,
+        [ETH.address]: ETH
       }
     default:
       return {}
@@ -919,9 +949,21 @@ export const isErrorMessage = (message: string): boolean => {
   return false
 }
 
-export const getNewTokenOrThrow = async (): Promise<any> => {} //TODO
+export const getNewTokenOrThrow = async (
+  address: HexString,
+  grc20: FungibleToken,
+  walletAddress: HexString
+): Promise<Record<HexString, Token>> => {
+  const tokenData = await getTokenDataByAddresses([address], grc20, walletAddress)
 
-export const addNewTokenToLocalStorage = (address: string, network: Network) => {
+  if (tokenData) {
+    return tokenData
+  } else {
+    throw new Error('Failed to fetch token information')
+  }
+}
+
+export const addNewTokenToLocalStorage = (address: HexString, network: Network) => {
   const currentListStr = localStorage.getItem(`CUSTOM_TOKENS_${network}`)
 
   const currentList = currentListStr !== null ? JSON.parse(currentListStr) : []

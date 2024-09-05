@@ -24,7 +24,7 @@ interface IProps {
   disabled: boolean
   balance?: string
   hideBalances?: boolean
-  handleAddToken: (address: string) => void
+  handleAddToken: (address: HexString) => void
   commonTokens: HexString[]
   limit?: number
   initialHideUnknownTokensValue: boolean

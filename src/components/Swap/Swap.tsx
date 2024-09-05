@@ -68,8 +68,8 @@ export interface ISwap {
     poolKey: PoolKey,
     slippage: bigint,
     knownPrice: Price,
-    tokenFrom: string,
-    tokenTo: string,
+    tokenFrom: HexString,
+    tokenTo: HexString,
     amountIn: bigint,
     amountOut: bigint,
     byAmountIn: boolean
@@ -81,7 +81,7 @@ export interface ISwap {
   onDisconnectWallet: () => void
   initialTokenFrom: string | null
   initialTokenTo: string | null
-  handleAddToken: (address: string) => void
+  handleAddToken: (address: HexString) => void
   commonTokens: HexString[]
   initialHideUnknownTokensValue: boolean
   onHideUnknownTokensChange: (val: boolean) => void

@@ -1,14 +1,16 @@
 import { actions } from '@store/reducers/pools'
+import { actions as walletActions } from '@store/reducers/wallet'
 import { invariantAddress, networkType, rpcAddress, status } from '@store/selectors/connection'
 import { poolsArraySortedByFees } from '@store/selectors/pools'
 import { swap } from '@store/selectors/swap'
-import { address } from '@store/selectors/wallet'
+import { hexAddress } from '@store/selectors/wallet'
 import apiSingleton from '@store/services/apiSingleton'
 import invariantSingleton from '@store/services/invariantSingleton'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { getNetworkTokensList } from '@utils/utils'
+import { getNetworkTokensList, getTokenDataByAddresses } from '@utils/utils'
 import grc20Singleton from '@store/services/grc20Singleton'
+import { HexString } from '@gear-js/api'
 
 const MarketEvents = () => {
   const dispatch = useDispatch()
@@ -17,33 +19,33 @@ const MarketEvents = () => {
   const { tokenFrom, tokenTo } = useSelector(swap)
   const allPools = useSelector(poolsArraySortedByFees)
   const rpc = useSelector(rpcAddress)
-  const walletAddress = useSelector(address)
+  const walletAddress = useSelector(hexAddress)
   const invariantAddr = useSelector(invariantAddress)
 
   useEffect(() => {
     const connectEvents = async () => {
       const api = await apiSingleton.loadInstance(network)
-      await grc20Singleton.loadInstance(api)
-      // const grc20 = await grc20Singleton.loadInstance(api)
-      const tokens = getNetworkTokensList(network)
+      const grc20 = await grc20Singleton.loadInstance(api)
+      let tokens = getNetworkTokensList(network)
+
       const currentListStr = localStorage.getItem(`CUSTOM_TOKENS_${network}`)
-      const currentList: string[] =
+      const currentList: HexString[] =
         currentListStr !== null
           ? JSON.parse(currentListStr)
-              .filter((address: string) => !tokens[address])
-              .map((address: string) => address)
+              .filter((address: HexString) => !tokens[address])
+              .map((address: HexString) => address)
           : []
-      // getTokenDataByAddresses(currentList, psp22, walletAddress)
-      //   .then(data => {
-      //     tokens = {
-      //       ...tokens,
-      //       ...data
-      //     }
-      //   })
-      // .finally(() => {
-      //   dispatch(actions.addTokens(tokens))
-      // })
-      // dispatch(walletActions.getBalances(currentList))
+      getTokenDataByAddresses(currentList, grc20, walletAddress)
+        .then(data => {
+          tokens = {
+            ...tokens,
+            ...data
+          }
+        })
+        .finally(() => {
+          dispatch(actions.addTokens(tokens))
+        })
+      dispatch(walletActions.getBalances(currentList))
     }
 
     connectEvents()

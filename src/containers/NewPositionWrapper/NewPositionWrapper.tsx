@@ -17,11 +17,13 @@ import {
 } from '@store/consts/static'
 import { PositionOpeningMethod, TokenPriceData } from '@store/consts/types'
 import {
+  addNewTokenToLocalStorage,
   calcPriceBySqrtPrice,
   calcPriceByTickIndex,
   createPlaceholderLiquidityPlot,
   getCoinGeckoTokenPrice,
   getMockedTokenPrice,
+  getNewTokenOrThrow,
   poolKeyToString,
   printBigint
 } from '@utils/utils'
@@ -38,12 +40,19 @@ import {
   poolsArraySortedByFees
 } from '@store/selectors/pools'
 import { initPosition, plotTicks, shouldNotUpdateRange } from '@store/selectors/positions'
-import { balanceLoading, status, swapTokens, swapTokensDict } from '@store/selectors/wallet'
-
+import {
+  balanceLoading,
+  hexAddress,
+  status,
+  swapTokens,
+  swapTokensDict
+} from '@store/selectors/wallet'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { VariantType } from 'notistack'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import apiSingleton from '@store/services/apiSingleton'
+import grc20Singleton from '@store/services/grc20Singleton'
 
 export interface IProps {
   initialTokenFrom: string
@@ -81,7 +90,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
 
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const currentNetwork = useSelector(networkType)
-
+  const walletAddress = useSelector(hexAddress)
   const tokensList = useSelector(swapTokens)
 
   const [poolIndex, setPoolIndex] = useState<number | null>(null)
@@ -298,41 +307,45 @@ export const NewPositionWrapper: React.FC<IProps> = ({
     }
   }, [poolKey])
 
-  const addTokenHandler = async () => {
-    console.log(tokensList)
-    // const psp22 = SingletonPSP22.getInstance()
-    // if (psp22 && tokensList.findIndex(token => token.address.toString() === address) === -1) {
-    //   getNewTokenOrThrow(address, psp22, walletAddress)
-    //     .then(data => {
-    //       dispatch(poolsActions.addTokens(data))
-    //       dispatch(walletActions.getBalances(Object.keys(data)))
-    //       addNewTokenToLocalStorage(address, currentNetwork)
-    //       dispatch(
-    //         snackbarsActions.add({
-    //           message: 'Token added.',
-    //           variant: 'success',
-    //           persist: false
-    //         })
-    //       )
-    //     })
-    //     .catch(() => {
-    //       dispatch(
-    //         snackbarsActions.add({
-    //           message: 'Token add failed.',
-    //           variant: 'error',
-    //           persist: false
-    //         })
-    //       )
-    //     })
-    // } else {
-    //   dispatch(
-    //     snackbarsActions.add({
-    //       message: 'Token already in list.',
-    //       variant: 'info',
-    //       persist: false
-    //     })
-    //   )
-    // }
+  const addTokenHandler = async (address: HexString) => {
+    const grc20 = await grc20Singleton.getInstance()
+    const api = await apiSingleton.loadInstance(network)
+    if (
+      grc20 &&
+      api !== null &&
+      tokensList.findIndex(token => token.address.toString() === address) === -1
+    ) {
+      getNewTokenOrThrow(address, grc20, walletAddress)
+        .then(data => {
+          dispatch(poolsActions.addTokens(data))
+          dispatch(walletActions.getBalances(Object.keys(data) as HexString[]))
+          addNewTokenToLocalStorage(address, network)
+          dispatch(
+            snackbarsActions.add({
+              message: 'Token added.',
+              variant: 'success',
+              persist: false
+            })
+          )
+        })
+        .catch(() => {
+          dispatch(
+            snackbarsActions.add({
+              message: 'Token add failed.',
+              variant: 'error',
+              persist: false
+            })
+          )
+        })
+    } else {
+      dispatch(
+        snackbarsActions.add({
+          message: 'Token already in list.',
+          variant: 'info',
+          persist: false
+        })
+      )
+    }
   }
 
   const copyPoolAddressHandler = (message: string, variant: VariantType) => {

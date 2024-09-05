@@ -47,9 +47,9 @@ export const Primary: Story = {
     current: null,
     onSelect: fn(),
     commonTokens: [
-      'So11111111111111111111111111111111111111112',
-      '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
-      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+      '0xSo11111111111111111111111111111111111111112',
+      '0x9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
+      '0xEPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
     ],
     handleAddToken: fn(),
     initialHideUnknownTokensValue: false,
