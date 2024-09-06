@@ -102,8 +102,6 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
     if (grc20 && api !== null && !tokensDict[walletAddress]) {
       getNewTokenOrThrow(address, grc20, walletAddress)
         .then(data => {
-          console.log(data)
-          console.log(Object.keys(data))
           dispatch(poolsActions.addTokens(data))
           dispatch(walletActions.getBalances(Object.keys(data) as HexString[]))
           addNewTokenToLocalStorage(address, network)
