@@ -170,8 +170,14 @@ export const Swap: React.FC<ISwap> = ({
     if (Object.keys(tokens).length && tokenFrom === null && tokenTo === null) {
       const firstCommonToken = commonTokens[0] || null
 
-      setTokenFrom(initialTokenFrom !== null ? decodeAddress(initialTokenFrom) : firstCommonToken)
-      setTokenTo(initialTokenTo !== null ? decodeAddress(initialTokenTo) : '0x')
+      setTokenFrom(
+        initialTokenFrom !== null && initialTokenFrom !== '0x'
+          ? decodeAddress(initialTokenFrom)
+          : firstCommonToken
+      )
+      setTokenTo(
+        initialTokenTo !== null && initialTokenTo !== '0x' ? decodeAddress(initialTokenTo) : null
+      )
     }
   }, [Object.keys(tokens).length])
 
