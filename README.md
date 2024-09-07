@@ -1,12 +1,10 @@
 <div align="center">
-
     <h1>⚡Invariant webapp⚡</h1>
     <p>
         | <a href="https://docs.invariant.app/docs/vara">DOCS 📚</a> |
-        <a href="https://invariant.app/math-spec-a0.pdf">MATH SPEC 📄</a> |
-        <a href="https://discord.gg/VzS3C9wR">DISCORD 🌐</a> |
+        <a href="https://invariant.app/math-spec-vara.pdf">MATH SPEC 📄</a> |
+        <a href="https://discord.gg/P5dheFSg">DISCORD 🌐</a> |
     </p>
-
 </div>
 
 Invariant protocol is an AMM built on [Vara](https://vara.network), leveraging high capital efficiency and the ability to list markets in a permissionless manner. At the core of the DEX is the Concentrated Liquidity mechanism, designed to handle tokens compatible with the [GRC20 standard](https://github.com/gear-foundation/standards). The protocol is structured around a single contract architecture.
