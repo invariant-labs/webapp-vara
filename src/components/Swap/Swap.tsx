@@ -159,7 +159,7 @@ export const Swap: React.FC<ISwap> = ({
 
   useEffect(() => {
     navigate(
-      `/exchange/${tokenFrom ? addressToTicker(tokenFrom) : '-'}/${tokenTo ? addressToTicker(tokenTo) : '-'}`,
+      `/exchange/${tokenFrom !== '0x' && tokenFrom ? addressToTicker(tokenFrom) : '-'}/${tokenTo !== '0x' && tokenTo ? addressToTicker(tokenTo) : '-'}`,
       {
         replace: true
       }
@@ -170,8 +170,14 @@ export const Swap: React.FC<ISwap> = ({
     if (Object.keys(tokens).length && tokenFrom === null && tokenTo === null) {
       const firstCommonToken = commonTokens[0] || null
 
-      setTokenFrom(initialTokenFrom !== null ? decodeAddress(initialTokenFrom) : firstCommonToken)
-      setTokenTo(initialTokenTo !== null ? decodeAddress(initialTokenTo) : '0x')
+      setTokenFrom(
+        initialTokenFrom !== null && initialTokenFrom !== '0x'
+          ? decodeAddress(initialTokenFrom)
+          : firstCommonToken
+      )
+      setTokenTo(
+        initialTokenTo !== null && initialTokenTo !== '0x' ? decodeAddress(initialTokenTo) : null
+      )
     }
   }, [Object.keys(tokens).length])
 

@@ -20,7 +20,7 @@ import { positionsList } from '@store/selectors/positions'
 import { getApi, getGRC20 } from './connection'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { createLoaderKey, getTokenBalances } from '@utils/utils'
-import { GearKeyring, HexString } from '@gear-js/api'
+import { GearApi, GearKeyring, HexString } from '@gear-js/api'
 import {
   FAUCET_DEPLOYER_MNEMONIC,
   FAUCET_SAFE_TRANSACTION_FEE,
@@ -28,7 +28,7 @@ import {
   TokenAirdropAmount
 } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
-import { batchTxs } from '@invariant-labs/vara-sdk'
+import { ActorId, batchTxs, Invariant } from '@invariant-labs/vara-sdk'
 
 export function* getWallet(): SagaGenerator<NightlyConnectAdapter> {
   const wallet = yield* call(getVaraWallet)
@@ -98,7 +98,6 @@ export function* handleAirdrop(): Generator {
   }
 
   const loaderAirdrop = createLoaderKey()
-  const loaderSigningTx = createLoaderKey()
 
   try {
     yield put(
@@ -130,18 +129,7 @@ export function* handleAirdrop(): Generator {
       txs.push(mintTx)
     }
 
-    yield put(
-      snackbarsActions.add({
-        message: 'Signing transaction...',
-        variant: 'pending',
-        persist: true,
-        key: loaderSigningTx
-      })
-    )
     yield* call(batchTxs, api, deployerAccount, txs)
-
-    closeSnackbar(loaderSigningTx)
-    yield put(snackbarsActions.remove(loaderSigningTx))
 
     closeSnackbar(loaderAirdrop)
     yield put(snackbarsActions.remove(loaderAirdrop))
@@ -161,8 +149,6 @@ export function* handleAirdrop(): Generator {
   } catch (error) {
     console.log(error)
 
-    closeSnackbar(loaderSigningTx)
-    yield put(snackbarsActions.remove(loaderSigningTx))
     closeSnackbar(loaderAirdrop)
     yield put(snackbarsActions.remove(loaderAirdrop))
   }
@@ -296,6 +282,54 @@ export function* handleReconnect(): Generator {
   yield* call(handleConnect, { type: actions.connect.type, payload: false })
 }
 
+export function* withdrawTokensPair(
+  tokenX: HexString,
+  tokenY: HexString,
+  invariant: Invariant,
+  api: GearApi,
+  walletAddress: HexString
+) {
+  const userBalances = yield* call([invariant, invariant.getUserBalances], walletAddress)
+
+  if (userBalances.size === 0) {
+    return
+  }
+  const loaderWithdrawTokens = createLoaderKey()
+
+  const withdrawTx = yield* call(
+    [invariant, invariant.withdrawTokenPairTx],
+    [tokenX, null] as [ActorId, bigint | null],
+    [tokenY, null] as [ActorId, bigint | null]
+  )
+
+  yield put(
+    snackbarsActions.add({
+      message: 'Withdrawing tokens from transaction...',
+      variant: 'pending',
+      persist: true,
+      key: loaderWithdrawTokens
+    })
+  )
+
+  try {
+    yield* call(batchTxs, api, walletAddress, [withdrawTx])
+    yield put(actions.getBalances([tokenX, tokenY]))
+  } catch (e) {
+    closeSnackbar(loaderWithdrawTokens)
+    yield put(snackbarsActions.remove(loaderWithdrawTokens))
+
+    yield put(
+      snackbarsActions.add({
+        message: 'Error during withdrawal tokens',
+        variant: 'error',
+        persist: false
+      })
+    )
+  }
+
+  closeSnackbar(loaderWithdrawTokens)
+  yield put(snackbarsActions.remove(loaderWithdrawTokens))
+}
 export function* handleGetBalances(action: PayloadAction<HexString[]>): Generator {
   yield* call(fetchBalances, action.payload)
 }

@@ -11,7 +11,7 @@ import {
 import { PayloadAction } from '@reduxjs/toolkit'
 import { ErrorMessage, U128MAX } from '@store/consts/static'
 import { actions, Simulate, Swap } from '@store/reducers/swap'
-import { pools, poolTicks, tickMaps, tokens } from '@store/selectors/pools'
+import { pools, poolTicks, tickMaps } from '@store/selectors/pools'
 import {
   calculateAmountInWithSlippage,
   createLoaderKey,
@@ -25,8 +25,8 @@ import {
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { actions as poolsActions } from '@store/reducers/pools'
 import { all, call, put, select, spawn, takeEvery } from 'typed-redux-saga'
-import { hexAddress } from '@store/selectors/wallet'
-import { fetchBalances, getWallet } from './wallet'
+import { hexAddress, tokensBalances } from '@store/selectors/wallet'
+import { fetchBalances, getWallet, withdrawTokensPair } from './wallet'
 import { invariantAddress } from '@store/selectors/connection'
 import { getApi, getGRC20, getInvariant } from './connection'
 import { closeSnackbar } from 'notistack'
@@ -46,9 +46,17 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
   if (!poolKey) {
     return
   }
-
   const loaderSwappingTokens = createLoaderKey()
   const loaderSigningTx = createLoaderKey()
+
+  const walletAddress = yield* select(hexAddress)
+  const adapter = yield* call(getWallet)
+  const maxTokenBalances = yield* select(tokensBalances)
+  const invAddress = yield* select(invariantAddress)
+
+  const api = yield* getApi()
+  const invariant = yield* getInvariant()
+  const grc20 = yield* getGRC20()
 
   try {
     yield put(
@@ -60,24 +68,15 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       })
     )
 
-    const walletAddress = yield* select(hexAddress)
-    const adapter = yield* call(getWallet)
-    const allTokens = yield* select(tokens)
-    const invAddress = yield* select(invariantAddress)
-
-    const api = yield* getApi()
-    const invariant = yield* getInvariant()
-    const grc20 = yield* getGRC20()
-
-    const tokenX = allTokens[poolKey.tokenX]
-    const tokenY = allTokens[poolKey.tokenY]
     const xToY = tokenFrom === poolKey.tokenX
 
     api.setSigner(adapter.signer as any)
 
+    yield* call(withdrawTokensPair, tokenFrom, tokenTo, invariant, api, walletAddress)
+
     const sqrtPriceLimit = calculateSqrtPriceAfterSlippage(estimatedPriceAfterSwap, slippage, !xToY)
 
-    const calculatedAmountIn = slippage
+    let calculatedAmountIn = slippage
       ? calculateAmountInWithSlippage(amountOut, sqrtPriceLimit, xToY, poolKey.feeTier.fee)
       : amountIn
 
@@ -89,18 +88,20 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     //   txs.push(depositTx)
     // }
 
-    const tokenAddress = xToY ? tokenX.address : tokenY.address
+    if (calculatedAmountIn > maxTokenBalances[tokenFrom].balance) {
+      calculatedAmountIn = amountIn
+    }
 
     const approveTx = yield* call(
       [grc20, grc20.approveTx],
       invAddress,
       calculatedAmountIn,
-      tokenAddress
+      tokenFrom
     )
 
     const depositTx = yield* call(
       [invariant, invariant.depositSingleTokenTx],
-      tokenAddress as ActorId,
+      tokenFrom as ActorId,
       calculatedAmountIn
     )
 
@@ -115,7 +116,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
 
     try {
       yield* call(batchTxs, api, walletAddress, [approveTx, depositTx])
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
@@ -138,9 +139,16 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     //   txs = [...txs, ...getWithdrawAllWAZEROTxs(invariant, psp22, invAddress, wazeroAddress)]
     // }
 
+    const withdrawTx = yield* call(
+      [invariant, invariant.withdrawTokenPairTx],
+      [tokenFrom, null] as [ActorId, bigint | null],
+      [tokenTo, null] as [ActorId, bigint | null]
+    )
+
     try {
-      yield* call(batchTxs, api, walletAddress, [swapTx])
+      yield* call(batchTxs, api, walletAddress, [swapTx, withdrawTx])
     } catch (e) {
+      console.log(e)
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
@@ -207,8 +215,11 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
         second: tokenTo
       })
     )
+
+    yield* call(withdrawTokensPair, tokenFrom, tokenTo, invariant, api, walletAddress)
   }
 }
+
 export enum SwapError {
   InsufficientLiquidity,
   AmountIsZero,
