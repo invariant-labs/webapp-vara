@@ -9,15 +9,13 @@ import {
   Tick,
   Tickmap
 } from '@invariant-labs/vara-sdk'
+import { Liquidity } from '@invariant-labs/vara-sdk/target/schema'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { BTC, ETH, USDC } from '@store/consts/static'
 import { PayloadType, Token } from '@store/consts/types'
 import { poolKeyToString } from '@utils/utils'
 
 import * as R from 'remeda'
-
-//TODO
-export type Liquidity = bigint
 
 export interface LiquidityTick {
   index: bigint
