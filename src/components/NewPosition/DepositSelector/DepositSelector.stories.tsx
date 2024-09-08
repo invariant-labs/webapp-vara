@@ -8,20 +8,11 @@ import { store } from '@store/index'
 import { MemoryRouter } from 'react-router-dom'
 
 const tokens: Record<string, SwapToken> = {
-  So11111111111111111111111111111111111111112: {
-    balance: 111 as any,
-    decimals: 6 as any,
-    symbol: 'SOL',
-    assetAddress: 'So11111111111111111111111111111111111111112',
-    name: 'Wrapped Solana',
-    logoURI:
-      'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png'
-  },
   '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E': {
     balance: 1000 as any,
     decimals: 6 as any,
     symbol: 'BTC',
-    assetAddress: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
+    assetAddress: '0x5117d1886af96c070a9c29093a432e6924d839b20d6e04042d40dc4723a59390',
     name: 'BTC',
     logoURI:
       'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png'
@@ -30,7 +21,7 @@ const tokens: Record<string, SwapToken> = {
     balance: 222 as any,
     decimals: 6 as any,
     symbol: 'USDC',
-    assetAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    assetAddress: '0xd5e714be0ac00dea0e33168af0ab99964c3338fea6a3569fb00a416704976f3b',
     name: 'USD coin',
     logoURI:
       'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png'
@@ -72,9 +63,8 @@ const PrimaryComponent: React.FC<IDepositSelector> = args => {
 export const Primary: Story = {
   args: {
     commonTokens: [
-      'So11111111111111111111111111111111111111112',
-      '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
-      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+      '0x5117d1886af96c070a9c29093a432e6924d839b20d6e04042d40dc4723a59390',
+      '0xd5e714be0ac00dea0e33168af0ab99964c3338fea6a3569fb00a416704976f3b'
     ],
     concentrationArray: Array.from({ length: 141 }, (_, i) => i + 2),
     concentrationIndex: 0,

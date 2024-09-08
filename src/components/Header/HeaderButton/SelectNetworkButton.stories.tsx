@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import SelectNetworkButton from './SelectNetworkButton'
-import { Network } from '@invariant-labs/vara-sdk'
-import { RPC } from '@store/consts/static'
+import { Network, RPC } from '@store/consts/static'
 import { action } from '@storybook/addon-actions'
 
 const meta = {

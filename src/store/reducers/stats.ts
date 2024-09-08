@@ -1,3 +1,4 @@
+import { HexString } from '@gear-js/api'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { PayloadType } from '@store/consts/types'
 
@@ -12,7 +13,7 @@ export interface Value24H {
 }
 
 export interface TokenStatsData {
-  address: string
+  address: HexString
   price: number
   priceChange: number
   volume24: number
@@ -21,8 +22,8 @@ export interface TokenStatsData {
 
 export interface PoolStatsData {
   poolAddress: string
-  tokenX: string
-  tokenY: string
+  tokenX: HexString
+  tokenY: HexString
   fee: number
   volume24: number
   tvl: number
