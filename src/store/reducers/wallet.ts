@@ -14,7 +14,7 @@ export interface ITokenBalance {
   balance: bigint
 }
 
-export interface IAlephZeroWallet {
+export interface IVaraWallet {
   status: Status
   address: string
   balance: bigint
@@ -22,7 +22,7 @@ export interface IAlephZeroWallet {
   balanceLoading: boolean
 }
 
-export const defaultState: IAlephZeroWallet = {
+export const defaultState: IVaraWallet = {
   status: Status.Uninitialized,
   address: '',
   balance: 0n,

@@ -23,6 +23,7 @@ export const SelectChain: React.FC<ISelectChainModal> = ({
   activeChain
 }) => {
   const { classes } = useStyles()
+
   return (
     <Popover
       open={open}

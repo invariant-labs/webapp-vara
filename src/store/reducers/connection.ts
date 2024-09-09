@@ -10,7 +10,7 @@ export enum Status {
   Error = 'error',
   Initialized = 'initalized'
 }
-export interface IAlephZeroConnectionStore {
+export interface IVaraConnectionStore {
   status: Status
   message: string
   networkType: Network
@@ -20,12 +20,12 @@ export interface IAlephZeroConnectionStore {
   // wrappedAZEROAddress: string
 }
 
-export const defaultState: IAlephZeroConnectionStore = {
+export const defaultState: IVaraConnectionStore = {
   status: Status.Uninitialized,
   message: '',
   networkType: Network.Testnet,
   blockNumber: 0,
-  rpcAddress: localStorage.getItem(`INVARIANT_RPC_AlephZero_${Network.Testnet}`) || RPC.TEST,
+  rpcAddress: localStorage.getItem(`INVARIANT_RPC_VARA_${Network.Testnet}`) || RPC.TEST,
   invariantAddress: TESTNET_INVARIANT_ADDRESS
   // wrappedAZEROAddress: TESTNET_WAZERO_ADDRESS
 }
@@ -34,7 +34,7 @@ const connectionSlice = createSlice({
   name: connectionSliceName,
   initialState: defaultState,
   reducers: {
-    initAlephZeroConnection(state) {
+    initVaraConnection(state) {
       state.status = Status.Init
       return state
     },

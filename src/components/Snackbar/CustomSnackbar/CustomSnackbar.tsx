@@ -26,7 +26,7 @@ const variantColors: Record<string, string> = {
 }
 
 const CustomSnackbar = React.forwardRef<HTMLDivElement, CustomContentProps>(
-  ({ message, txid, variant = 'default', snackbarId, iconVariant, link }, ref) => {
+  ({ message, variant = 'default', snackbarId, iconVariant, link }, ref) => {
     const { closeSnackbar } = useSnackbar()
     const dispatch = useDispatch()
 
@@ -58,7 +58,7 @@ const CustomSnackbar = React.forwardRef<HTMLDivElement, CustomContentProps>(
             </Grid>
             <StyledTitle>{message}</StyledTitle>
           </Grid>
-          {txid && (
+          {/* {txid && (
             <Grid display='flex' mx={1} minWidth='fit-content'>
               <StyledDetails
                 onClick={() => {
@@ -70,7 +70,7 @@ const CustomSnackbar = React.forwardRef<HTMLDivElement, CustomContentProps>(
                 <img width={16} src={icons.closeIcon} alt='Close'></img>
               </StyledCloseButton>
             </Grid>
-          )}
+          )} */}
           {link && (
             <Grid display='flex' mx={1} minWidth='fit-content'>
               <StyledDetails

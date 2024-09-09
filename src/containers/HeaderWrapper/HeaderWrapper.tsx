@@ -41,16 +41,16 @@ export const HeaderWrapper: React.FC = () => {
   }, [])
 
   const defaultTestnetRPC = useMemo(() => {
-    const lastRPC = localStorage.getItem(`INVARIANT_RPC_AlephZero_${currentNetwork}`)
+    const lastRPC = localStorage.getItem(`INVARIANT_RPC_Vara_${currentNetwork}`)
 
     if (lastRPC === null) {
-      localStorage.setItem(`INVARIANT_RPC_AlephZero_${currentNetwork}`, RPC.TEST)
+      localStorage.setItem(`INVARIANT_RPC_Vara_${currentNetwork}`, RPC.TEST)
     }
 
     return lastRPC === null ? RPC.TEST : lastRPC
   }, [])
 
-  const activeChain = CHAINS.find(chain => chain.name === Chain.AlephZero) ?? CHAINS[0]
+  const activeChain = CHAINS.find(chain => chain.name === Chain.Vara) ?? CHAINS[0]
 
   return (
     <Header
@@ -58,7 +58,7 @@ export const HeaderWrapper: React.FC = () => {
       onNetworkSelect={(network, rpcAddress, rpcName) => {
         if (network !== currentNetwork || rpcAddress !== currentRpc) {
           if (network === Network.Testnet) {
-            localStorage.setItem(`INVARIANT_RPC_AlephZero_${network}`, rpcAddress)
+            localStorage.setItem(`INVARIANT_RPC_Vara_${network}`, rpcAddress)
           }
 
           dispatch(actions.setNetwork({ networkType: network, rpcAddress, rpcName }))

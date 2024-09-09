@@ -1,11 +1,11 @@
 import { BN } from '@polkadot/util'
 import { createSelector } from '@reduxjs/toolkit'
-import { IAlephZeroWallet, ITokenBalance, walletSliceName } from '@store/reducers/wallet'
+import { IVaraWallet, ITokenBalance, walletSliceName } from '@store/reducers/wallet'
 import { AnyProps, keySelectors } from './helpers'
 import { tokens } from './pools'
 import { decodeAddress, HexString } from '@gear-js/api'
 
-const store = (s: AnyProps) => s[walletSliceName] as IAlephZeroWallet
+const store = (s: AnyProps) => s[walletSliceName] as IVaraWallet
 
 export const { address, balance, tokensBalances, status, balanceLoading } = keySelectors(store, [
   'address',
@@ -97,7 +97,7 @@ export type TokenBalances = ITokenBalance & {
   assetDecimals: number
 }
 
-export const alephZeroWalletSelectors = {
+export const varaWalletSelectors = {
   address,
   hexAddress,
   balance,
@@ -106,4 +106,4 @@ export const alephZeroWalletSelectors = {
   tokenBalance,
   balanceLoading
 }
-export default alephZeroWalletSelectors
+export default varaWalletSelectors

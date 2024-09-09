@@ -107,7 +107,7 @@ export function* networkChangeSaga(): Generator {
   yield takeLeading(actions.setNetwork, handleNetworkChange)
 }
 export function* initConnectionSaga(): Generator {
-  yield takeLeading(actions.initAlephZeroConnection, initConnection)
+  yield takeLeading(actions.initVaraConnection, initConnection)
 }
 export function* connectionSaga(): Generator {
   yield* all([networkChangeSaga, initConnectionSaga].map(spawn))
