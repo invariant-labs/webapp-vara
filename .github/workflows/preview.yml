@@ -1,5 +1,10 @@
 name: preview
 
+permissions:
+  contents: write
+  deployments: write
+  pull-requests: write
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
