@@ -26,5 +26,8 @@ export default defineConfig({
     rollupOptions: {
       external: ['fs/promises', 'path', 'invariant-vara-wasm']
     }
+  },
+  optimizeDeps: {
+    exclude: ['fs/promises', 'path', 'invariant-vara-wasm']
   }
 })
