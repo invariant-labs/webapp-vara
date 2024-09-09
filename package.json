@@ -17,7 +17,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@gear-js/api": "^0.38.1",
+    "@gear-js/api": "0.38.1",
     "@invariant-labs/vara-sdk": "^0.1.10",
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
