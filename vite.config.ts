@@ -24,7 +24,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['path']
+      external: ['fs/promises', 'path', 'invariant-vara-wasm']
     }
   }
 })
