@@ -32,6 +32,8 @@ import swapListIcon from './svg/swap-list.svg'
 import a0Logo from './svg/a0Logo.svg'
 import eclipseLogo from './svg/eclipseLogo.svg'
 import solanaLogo from './svg/solanaLogo.svg'
+import varaLogo from './svg/VaraLogo.svg'
+import alephiumLogo from './svg/alephiumLogo.svg'
 
 const icons: { [key: string]: string } = {
   clear: clearIcon,
@@ -67,7 +69,9 @@ const icons: { [key: string]: string } = {
   swapListIcon: swapListIcon,
   AlephZero: a0Logo,
   Eclipse: eclipseLogo,
-  Solana: solanaLogo
+  Solana: solanaLogo,
+  Vara: varaLogo,
+  Alephium: alephiumLogo
 }
 
 export default icons

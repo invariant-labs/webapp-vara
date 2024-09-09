@@ -19,7 +19,7 @@ export const nightlyConnectAdapter = async (
       appMetadata: {
         name: 'Invariant',
         description: 'Invariant - AMM DEX provided concentrated liquidity',
-        icon: 'https://invariant.app/favicon-192x192.png'
+        icon: 'https://vara.invariant.app/favicon-192x192.png'
       },
       network: 'Vara',
       persistent: persisted

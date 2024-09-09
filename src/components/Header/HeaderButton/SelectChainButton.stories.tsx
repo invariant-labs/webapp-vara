@@ -14,11 +14,11 @@ type Story = StoryObj<typeof meta>
 export const Primary: Story = {
   args: {
     activeChain: {
-      name: Chain.AlephZero,
-      address: 'https://azero.invariant.app/swap'
+      name: Chain.Vara,
+      address: 'https://vara.invariant.app/exchange'
     },
     chains: [
-      { name: Chain.AlephZero, address: 'https://azero.invariant.app/swap' },
+      { name: Chain.Vara, address: 'https://vara.invariant.app/exchange' },
       { name: Chain.Eclipse, address: 'https://eclipse.invariant.app/swap' }
     ],
     onSelect: fn(),

@@ -17,8 +17,8 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@gear-js/api": "^0.38.1",
-    "@invariant-labs/vara-sdk": "^0.1.10",
+    "@gear-js/api": "0.38.1",
+    "@invariant-labs/vara-sdk": "^0.1.12",
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
     "@nightlylabs/wallet-selector-polkadot": "^0.2.5",
@@ -30,6 +30,7 @@
     "@reduxjs/toolkit": "^2.2.3",
     "@storybook/addon-actions": "^8.1.10",
     "axios": "^1.6.8",
+    "buffer": "^6.0.3",
     "classnames": "^2.5.1",
     "notistack": "^3.0.1",
     "rc-scrollbars": "^1.1.6",
@@ -49,6 +50,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.5.0",
+    "@rollup/plugin-inject": "^5.0.5",
     "@storybook/addon-essentials": "^8.1.10",
     "@storybook/addon-interactions": "^8.1.10",
     "@storybook/addon-links": "^8.1.10",

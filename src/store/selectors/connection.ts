@@ -1,14 +1,14 @@
-import { IAlephZeroConnectionStore, connectionSliceName } from '@store/reducers/connection'
+import { IVaraConnectionStore, connectionSliceName } from '@store/reducers/connection'
 import { AnyProps, keySelectors } from './helpers'
 
-const store = (s: AnyProps) => s[connectionSliceName] as IAlephZeroConnectionStore
+const store = (s: AnyProps) => s[connectionSliceName] as IVaraConnectionStore
 
 export const { networkType, status, blockNumber, rpcAddress, invariantAddress } = keySelectors(
   store,
   ['networkType', 'status', 'blockNumber', 'rpcAddress', 'invariantAddress']
 )
 
-export const alephZeroConnectionSelectors = {
+export const varaConnectionSelectors = {
   networkType,
   status,
   blockNumber,
@@ -16,4 +16,4 @@ export const alephZeroConnectionSelectors = {
   invariantAddress
 }
 
-export default alephZeroConnectionSelectors
+export default varaConnectionSelectors

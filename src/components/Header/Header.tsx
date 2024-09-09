@@ -80,7 +80,7 @@ export const Header: React.FC<IHeader> = ({
     {
       networkType: Network.Testnet,
       rpc: RPC.TEST,
-      rpcName: 'Aleph Zero'
+      rpcName: 'Vara'
     }
   ]
 

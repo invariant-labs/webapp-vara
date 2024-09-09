@@ -1,24 +1,24 @@
 name: preview
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
 permissions:
   contents: write
   deployments: write
   pull-requests: write
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '22.3'
       - name: install
         run: npm i
       - name: build
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Deploy to Vercel Action
         uses: BetaHuhn/deploy-to-vercel-action@v1
         with:

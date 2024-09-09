@@ -41,8 +41,8 @@ export const Primary: Story = {
     onCopyAddress: fn(),
     onChangeWallet: fn(),
     activeChain: {
-      name: Chain.AlephZero,
-      address: 'https://azero.invariant.app/swap'
+      name: Chain.Vara,
+      address: 'https://vara.invariant.app/exchange'
     },
     onChainSelect: fn()
   }

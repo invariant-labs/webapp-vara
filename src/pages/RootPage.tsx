@@ -5,7 +5,7 @@ import EventsHandlers from '@containers/EventHandlers/index'
 import FooterWrapper from '@containers/FooterWrapper'
 import HeaderWrapper from '@containers/HeaderWrapper/HeaderWrapper'
 import { Grid } from '@mui/material'
-import { Status, actions as alephZeroConnectionActions } from '@store/reducers/connection'
+import { Status, actions as varaConnectionActions } from '@store/reducers/connection'
 import { status as connectionStatus } from '@store/selectors/connection'
 import { toBlur } from '@utils/uiUtils'
 import useStyles from './style'
@@ -20,7 +20,7 @@ const RootPage: React.FC = React.memo(() => {
   const { classes } = useStyles()
 
   const initConnection = useCallback(() => {
-    dispatch(alephZeroConnectionActions.initAlephZeroConnection())
+    dispatch(varaConnectionActions.initVaraConnection())
   }, [dispatch])
 
   useEffect(() => {
