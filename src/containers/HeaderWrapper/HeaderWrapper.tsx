@@ -1,5 +1,4 @@
 import Header from '@components/Header/Header'
-import { Network } from '@store/consts/static'
 import { RPC, CHAINS } from '@store/consts/static'
 import { actions } from '@store/reducers/connection'
 import { Status, actions as walletActions } from '@store/reducers/wallet'
@@ -12,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { Chain } from '@store/consts/types'
+import { Network } from '@invariant-labs/vara-sdk'
 
 export const HeaderWrapper: React.FC = () => {
   const dispatch = useDispatch()

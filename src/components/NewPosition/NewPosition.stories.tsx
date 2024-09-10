@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { fn } from '@storybook/test'
 import { MemoryRouter } from 'react-router-dom'
 import NewPosition from './NewPosition'
-import { Network } from '@store/consts/static'
+import { Network } from '@invariant-labs/vara-sdk'
 
 const meta = {
   title: 'PageComponent/NewPosition',

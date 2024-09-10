@@ -1,6 +1,5 @@
 import { GearApi } from '@gear-js/api'
-import { FungibleToken } from '@invariant-labs/vara-sdk'
-import { Network } from '@store/consts/static'
+import { FungibleToken, Network } from '@invariant-labs/vara-sdk'
 
 class SingletonGRC20 {
   static GRC20: FungibleToken | null = null

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import SelectRPCButton from './SelectRPCButton'
-import { Network, RPC } from '@store/consts/static'
+import { RPC } from '@store/consts/static'
 import { action } from '@storybook/addon-actions'
+import { Network } from '@invariant-labs/vara-sdk'
 
 const meta = {
   title: 'Buttons/SelectRPCButton',

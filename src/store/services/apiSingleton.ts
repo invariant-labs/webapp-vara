@@ -1,6 +1,5 @@
-import { initGearApi } from '@invariant-labs/vara-sdk'
+import { initGearApi, Network } from '@invariant-labs/vara-sdk'
 import { GearApi } from '@gear-js/api'
-import { Network } from '@store/consts/static'
 
 class SingletonApi {
   static api: GearApi | null = null
@@ -12,7 +11,7 @@ class SingletonApi {
 
   static async loadInstance(network: Network): Promise<GearApi> {
     if (!this.api || network !== this.network) {
-      this.api = await initGearApi(network as any)
+      this.api = await initGearApi(network)
       this.network = network
     }
 

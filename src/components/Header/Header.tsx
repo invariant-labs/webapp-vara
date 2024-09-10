@@ -6,7 +6,7 @@ import { Box, Button, CardMedia, Grid, IconButton, useMediaQuery } from '@mui/ma
 import icons from '@static/icons'
 import Hamburger from '@static/svg/Hamburger.svg'
 import { theme } from '@static/theme'
-import { RPC, CHAINS, Network } from '@store/consts/static'
+import { RPC, CHAINS } from '@store/consts/static'
 import { blurContent, unblurContent } from '@utils/uiUtils'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -18,6 +18,7 @@ import useStyles from './style'
 import SelectChainButton from './HeaderButton/SelectChainButton'
 import { ISelectChain } from '@store/consts/types'
 import SelectChain from '@components/Modals/SelectChain/SelectChain'
+import { Network } from '@invariant-labs/vara-sdk'
 
 export interface IHeader {
   address: string

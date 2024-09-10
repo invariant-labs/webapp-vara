@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import loader from '@static/gif/loader.gif'
 import useStyles from './styles'
 import { Grid, Typography } from '@mui/material'
-import { Network } from '@store/consts/static'
 import { EmptyPlaceholder } from '@components/EmptyPlaceholder/EmptyPlaceholder'
 // import {
 //   fees24,
@@ -32,6 +31,7 @@ import {
   volume24h,
   volumePlotData
 } from './mockStats'
+import { Network } from '@invariant-labs/vara-sdk'
 
 export const WrappedStats: React.FC = () => {
   const { classes } = useStyles()
