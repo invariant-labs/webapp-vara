@@ -2,17 +2,12 @@ import { ProgressState } from '@components/AnimatedButton/AnimatedButton'
 import Slippage from '@components/Modals/Slippage/Slippage'
 import { INoConnected, NoConnected } from '@components/NoConnected/NoConnected'
 import Refresher from '@components/Refresher/Refresher'
-import { getMaxTick, getMinTick } from '@invariant-labs/vara-sdk'
+import { getMaxTick, getMinTick, Network } from '@invariant-labs/vara-sdk'
 import { PERCENTAGE_DENOMINATOR } from '@invariant-labs/vara-sdk/target/consts'
 import { Box, Button, Grid, Hidden, Typography } from '@mui/material'
 import backIcon from '@static/svg/back-arrow.svg'
 import settingIcon from '@static/svg/settings.svg'
-import {
-  ALL_FEE_TIERS_DATA,
-  Network,
-  PositionTokenBlock,
-  REFRESHER_INTERVAL
-} from '@store/consts/static'
+import { ALL_FEE_TIERS_DATA, PositionTokenBlock, REFRESHER_INTERVAL } from '@store/consts/static'
 import {
   calcPriceBySqrtPrice,
   calculateConcentrationRange,

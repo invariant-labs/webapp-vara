@@ -1,7 +1,6 @@
-import { HexString, PoolKey } from '@invariant-labs/vara-sdk'
+import { HexString, Network, PoolKey } from '@invariant-labs/vara-sdk'
 import { ActionCreatorWithPayload } from '@reduxjs/toolkit'
 import { SwapError } from '@store/sagas/swap'
-import { Network } from './static'
 
 interface ActionsBasicType {
   [k: string]: ActionCreatorWithPayload<any>

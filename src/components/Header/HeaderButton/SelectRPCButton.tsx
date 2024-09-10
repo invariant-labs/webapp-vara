@@ -5,7 +5,7 @@ import { blurContent, unblurContent } from '@utils/uiUtils'
 import { Button } from '@mui/material'
 import SelectTestnetRPC from '@components/Modals/SelectTestnetRPC/SelectTestnetRPC'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import { Network } from '@store/consts/static'
+import { Network } from '@invariant-labs/vara-sdk'
 
 export interface IProps {
   rpc: string

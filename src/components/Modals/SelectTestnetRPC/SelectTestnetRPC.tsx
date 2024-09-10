@@ -4,7 +4,7 @@ import { ISelectNetwork } from '@store/consts/types'
 import classNames from 'classnames'
 import React, { useEffect, useRef, useState } from 'react'
 import useStyles from './styles'
-import { Network } from '@store/consts/static'
+import { Network } from '@invariant-labs/vara-sdk'
 
 export interface ISelectTestnetRPC {
   networks: ISelectNetwork[]

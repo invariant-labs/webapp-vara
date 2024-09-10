@@ -1,6 +1,7 @@
 import {
   FEE_TIERS,
   HexString,
+  Network,
   Position,
   TESTNET_BTC_ADDRESS,
   TESTNET_ETH_ADDRESS,
@@ -17,12 +18,6 @@ import {
 } from './types'
 import { testnetBestTiersCreator } from '@utils/utils'
 import { POSITIONS_ENTRIES_LIMIT } from '@invariant-labs/vara-sdk/target/consts'
-
-export const enum Network {
-  Local = 'Local',
-  Testnet = 'Testnet',
-  Mainnet = 'Mainnet'
-}
 
 export enum RPC {
   TEST = 'wss://testnet.vara.network',

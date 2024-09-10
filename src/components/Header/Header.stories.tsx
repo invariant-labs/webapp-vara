@@ -2,11 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { fn } from '@storybook/test'
 import Header from './Header'
 import { MemoryRouter } from 'react-router-dom'
-
 import { Chain } from '@store/consts/types'
 import { Provider } from 'react-redux'
 import { store } from '@store/index'
-import { Network } from '@store/consts/static'
+import { Network } from '@invariant-labs/vara-sdk'
 
 const meta = {
   title: 'Layout/Header',
