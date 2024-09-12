@@ -3,7 +3,7 @@ import { PayloadAction } from '@reduxjs/toolkit'
 import { actions as positionsActions } from '@store/reducers/positions'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { Status, actions } from '@store/reducers/wallet'
-import { tokens } from '@store/selectors/pools'
+import { tokensWithoutVara } from '@store/selectors/pools'
 import { address, balance, hexAddress, status } from '@store/selectors/wallet'
 import { disconnectWallet, getVaraWallet } from '@utils/web3/wallet'
 import {
@@ -29,6 +29,7 @@ import {
 } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
 import { ActorId, batchTxs, Invariant } from '@invariant-labs/vara-sdk'
+import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 
 export function* getWallet(): SagaGenerator<NightlyConnectAdapter> {
   const wallet = yield* call(getVaraWallet)
@@ -180,16 +181,11 @@ export function* init(isEagerConnect: boolean): Generator {
       )
     }
 
-    // if (accounts.length === 0) {
-    //   yield* put(actions.setStatus(Status.Error))
-    //   return
-    // }
     yield* put(actions.setAddress(accounts[0].address))
 
-    const allTokens = yield* select(tokens)
-    const tokensList = Object.keys(allTokens) as HexString[]
+    const allTokens = yield* select(tokensWithoutVara)
 
-    yield* call(fetchBalances, tokensList)
+    yield* call(fetchBalances, allTokens as HexString[])
     yield* put(actions.setStatus(Status.Initialized))
   } catch (error) {
     console.log(error)
@@ -250,30 +246,36 @@ export function* handleDisconnect(): Generator {
   }
 }
 export function* fetchBalances(tokens: HexString[]): Generator {
-  const stringAddress = yield* select(address)
-  const walletAddress = yield* select(hexAddress)
-  const grc20 = yield* getGRC20()
+  try {
+    const stringAddress = yield* select(address)
+    const walletAddress = yield* select(hexAddress)
+    const grc20 = yield* getGRC20()
+    const tokensWithoutVara = tokens.filter(token => token !== VARA_ADDRESS)
 
-  yield* put(actions.setIsBalanceLoading(true))
+    yield* put(actions.setIsBalanceLoading(true))
 
-  const balance = yield* call(getBalance, stringAddress)
-  yield* put(actions.setBalance(BigInt(balance)))
+    const balance = yield* call(getBalance, stringAddress)
+    yield* put(actions.setBalance(BigInt(balance)))
 
-  const tokenBalances = yield* call(getTokenBalances, tokens, grc20, walletAddress)
+    const tokenBalances = yield* call(getTokenBalances, tokensWithoutVara, grc20, walletAddress)
 
-  if (tokenBalances.length !== 0) {
-    yield* put(
-      actions.addTokenBalances(
-        tokenBalances.map(([address, balance]) => {
-          return {
-            address,
-            balance
-          }
-        })
+    if (tokenBalances.length !== 0) {
+      yield* put(
+        actions.addTokenBalances(
+          tokenBalances.map(([address, balance]) => {
+            return {
+              address,
+              balance
+            }
+          })
+        )
       )
-    )
+    }
+    yield* put(actions.setIsBalanceLoading(false))
+  } catch (error) {
+    console.log(error)
+    yield* put(actions.setIsBalanceLoading(false))
   }
-  yield* put(actions.setIsBalanceLoading(false))
 }
 
 export function* handleReconnect(): Generator {
@@ -292,15 +294,42 @@ export function* withdrawTokensPair(
   const userBalances = yield* call([invariant, invariant.getUserBalances], walletAddress)
 
   if (userBalances.size === 0) {
+    if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
+      yield put(actions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
+    } else {
+      yield put(actions.getBalances([tokenX, tokenY]))
+    }
+
     return
   }
   const loaderWithdrawTokens = createLoaderKey()
 
-  const withdrawTx = yield* call(
-    [invariant, invariant.withdrawTokenPairTx],
-    [tokenX, null] as [ActorId, bigint | null],
-    [tokenY, null] as [ActorId, bigint | null]
-  )
+  const txs = []
+
+  if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
+    const isTokenXVara = tokenX === VARA_ADDRESS
+    if (userBalances.has(VARA_ADDRESS)) {
+      const withdrawVaraTx = yield* call([invariant, invariant.withdrawVaraTx], null)
+      txs.push(withdrawVaraTx)
+    }
+
+    if (userBalances.has(isTokenXVara ? tokenY : tokenX)) {
+      const withdrawSecondTokenTx = yield* call(
+        [invariant, invariant.withdrawSingleTokenTx],
+        isTokenXVara ? tokenY : tokenX,
+        null
+      )
+
+      txs.push(withdrawSecondTokenTx)
+    }
+  } else {
+    const withdrawTx = yield* call(
+      [invariant, invariant.withdrawTokenPairTx],
+      [tokenX, null] as [ActorId, bigint | null],
+      [tokenY, null] as [ActorId, bigint | null]
+    )
+    txs.push(withdrawTx)
+  }
 
   yield put(
     snackbarsActions.add({
@@ -312,9 +341,15 @@ export function* withdrawTokensPair(
   )
 
   try {
-    yield* call(batchTxs, api, walletAddress, [withdrawTx])
-    yield put(actions.getBalances([tokenX, tokenY]))
+    yield* call(batchTxs, api, walletAddress, txs)
+
+    if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
+      yield put(actions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
+    } else {
+      yield put(actions.getBalances([tokenX, tokenY]))
+    }
   } catch (e) {
+    console.log(e)
     closeSnackbar(loaderWithdrawTokens)
     yield put(snackbarsActions.remove(loaderWithdrawTokens))
 
@@ -347,7 +382,7 @@ export function* airdropSaga(): Generator {
 }
 
 export function* getBalancesHandler(): Generator {
-  yield takeLeading(actions.getBalances, handleGetBalances)
+  yield takeLatest(actions.getBalances, handleGetBalances)
 }
 
 export function* reconnecthandler(): Generator {

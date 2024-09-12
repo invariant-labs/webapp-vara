@@ -42,24 +42,6 @@ export function* getGRC20(): SagaGenerator<FungibleToken> {
   return GRC20
 }
 
-// export function* getWrappedAZERO(): SagaGenerator<WrappedAZERO> {
-//   let wrappedAZERO = yield* call([SingletonWrappedAZERO, SingletonWrappedAZERO.getInstance])
-
-//   if (!wrappedAZERO) {
-//     const api = yield* call(getApi)
-//     const network = yield* select(networkType)
-//     const wrappedAZEROAddr = yield* select(wrappedAZEROAddress)
-//     wrappedAZERO = yield* call(
-//       [SingletonWrappedAZERO, SingletonWrappedAZERO.loadInstance],
-//       api,
-//       network,
-//       wrappedAZEROAddr
-//     )
-//   }
-
-//   return wrappedAZERO
-// }
-
 export function* initConnection(): Generator {
   try {
     yield* getApi()

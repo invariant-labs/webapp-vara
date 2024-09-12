@@ -13,7 +13,7 @@ type Story = StoryObj<typeof meta>
 export const Primary: Story = {
   args: {
     tokenXName: 'BTC',
-    tokenYName: 'AZERO',
+    tokenYName: 'VARA',
     tokenXIcon: '',
     tokenYIcon: '',
     min: 2149.6,

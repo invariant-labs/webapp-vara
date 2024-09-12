@@ -25,11 +25,12 @@ import {
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { actions as poolsActions } from '@store/reducers/pools'
 import { all, call, put, select, spawn, takeEvery } from 'typed-redux-saga'
-import { hexAddress, tokensBalances } from '@store/selectors/wallet'
-import { fetchBalances, getWallet, withdrawTokensPair } from './wallet'
+import { balance, hexAddress, tokensBalances } from '@store/selectors/wallet'
+import { getWallet, withdrawTokensPair } from './wallet'
 import { invariantAddress } from '@store/selectors/connection'
 import { getApi, getGRC20, getInvariant } from './connection'
 import { closeSnackbar } from 'notistack'
+import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 
 export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generator {
   const {
@@ -72,24 +73,40 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
 
     api.setSigner(adapter.signer as any)
 
-    yield* call(withdrawTokensPair, tokenFrom, tokenTo, invariant, api, walletAddress)
-
     const sqrtPriceLimit = calculateSqrtPriceAfterSlippage(estimatedPriceAfterSwap, slippage, !xToY)
 
     let calculatedAmountIn = slippage
       ? calculateAmountInWithSlippage(amountOut, sqrtPriceLimit, xToY, poolKey.feeTier.fee)
       : amountIn
 
-    // if ((xToY && poolKey.tokenX === wazeroAddress) || (!xToY && poolKey.tokenY === wazeroAddress)) {
-    //   const azeroBalance = yield* select(balance)
-    //   const azeroAmountInWithSlippage =
-    //     azeroBalance > calculatedAmountIn ? calculatedAmountIn : azeroBalance
-    //   const depositTx = wazero.depositTx(azeroAmountInWithSlippage, WAZERO_DEPOSIT_OPTIONS)
-    //   txs.push(depositTx)
-    // }
+    const txs = []
 
-    if (calculatedAmountIn > maxTokenBalances[tokenFrom].balance) {
-      calculatedAmountIn = amountIn
+    if (tokenFrom === VARA_ADDRESS) {
+      const varaBalance = yield* select(balance)
+
+      const varaAmountInWithSlippage =
+        varaBalance > calculatedAmountIn ? calculatedAmountIn : varaBalance
+
+      calculatedAmountIn = varaAmountInWithSlippage
+
+      const depositVaraTx = yield* call(
+        [invariant, invariant.depositVaraTx],
+        varaAmountInWithSlippage
+      )
+
+      txs.push(depositVaraTx)
+    } else {
+      if (calculatedAmountIn > maxTokenBalances[tokenFrom].balance) {
+        calculatedAmountIn = amountIn
+      }
+
+      const depositTx = yield* call(
+        [invariant, invariant.depositSingleTokenTx],
+        tokenFrom as ActorId,
+        calculatedAmountIn
+      )
+
+      txs.push(depositTx)
     }
 
     const approveTx = yield* call(
@@ -99,11 +116,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       tokenFrom
     )
 
-    const depositTx = yield* call(
-      [invariant, invariant.depositSingleTokenTx],
-      tokenFrom as ActorId,
-      calculatedAmountIn
-    )
+    txs.unshift(approveTx)
 
     yield put(
       snackbarsActions.add({
@@ -115,7 +128,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     )
 
     try {
-      yield* call(batchTxs, api, walletAddress, [approveTx, depositTx])
+      yield* call(batchTxs, api, walletAddress, txs)
     } catch (e: any) {
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
@@ -130,23 +143,8 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       slippage
     )
 
-    // if ((!xToY && poolKey.tokenX === wazeroAddress) || (xToY && poolKey.tokenY === wazeroAddress)) {
-    //   const withdrawTx = wazero.withdrawTx(amountOut, WAZERO_WITHDRAW_OPTIONS)
-    //   txs.push(withdrawTx)
-    // }
-
-    // if (poolKey.tokenX === wazeroAddress || poolKey.tokenX === wazeroAddress) {
-    //   txs = [...txs, ...getWithdrawAllWAZEROTxs(invariant, psp22, invAddress, wazeroAddress)]
-    // }
-
-    const withdrawTx = yield* call(
-      [invariant, invariant.withdrawTokenPairTx],
-      [tokenFrom, null] as [ActorId, bigint | null],
-      [tokenTo, null] as [ActorId, bigint | null]
-    )
-
     try {
-      yield* call(batchTxs, api, walletAddress, [swapTx, withdrawTx])
+      yield* call(batchTxs, api, walletAddress, [swapTx])
     } catch (e) {
       console.log(e)
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
@@ -167,8 +165,6 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       })
     )
 
-    yield* call(fetchBalances, [poolKey.tokenX, poolKey.tokenY])
-
     yield put(actions.setSwapSuccess(true))
 
     yield put(
@@ -177,6 +173,8 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
         second: tokenTo
       })
     )
+
+    yield* call(withdrawTokensPair, tokenFrom, tokenTo, invariant, api, walletAddress)
   } catch (e: any) {
     if (e.failedTxs) {
       console.log(e.failedTxs)
