@@ -77,12 +77,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     )
     api.setSigner(adapter.signer as any)
 
-    console.log('feeTier', feeTier)
-    console.log('spotSqrtPrice', spotSqrtPrice)
-    console.log('liquidityDelta', liquidityDelta)
-    console.log('lowerTick', lowerTick)
-    console.log('upperTick', upperTick)
-    console.log('slippageTolerance', slippageTolerance)
     let [xAmountWithSlippage, yAmountWithSlippage] = calculateTokenAmountsWithSlippage(
       feeTier.tickSpacing,
       spotSqrtPrice,
@@ -93,9 +87,8 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       true
     )
 
+    const txDepositVara = []
     const txs = []
-    console.log('existential deposit -------', api.existentialDeposit.toBigInt())
-    console.log('POOL_SAFE_TRANSACTION_FEE', POOL_SAFE_TRANSACTION_FEE)
     if (
       (tokenX === VARA_ADDRESS && tokenXAmount !== 0n) ||
       (tokenY === VARA_ADDRESS && tokenYAmount !== 0n)
@@ -103,21 +96,23 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       const isTokenX = tokenX === VARA_ADDRESS
       const inputVaraAmount = isTokenX ? tokenXAmount : tokenYAmount
 
-      console.log('inputVaraAmount', inputVaraAmount)
-      console.log('varaBalance', varaBalance)
-      console.log('xAmountWithSlippage', xAmountWithSlippage)
-      console.log('yAmountWithSlippage', yAmountWithSlippage)
       const slippageAmount = isTokenX ? xAmountWithSlippage : yAmountWithSlippage
-      const varaAmount = inputVaraAmount > slippageAmount ? slippageAmount : inputVaraAmount
+      const varaAmount =
+        slippageAmount > varaBalance - POOL_SAFE_TRANSACTION_FEE ? inputVaraAmount : slippageAmount
 
-      console.log('varaAmount', varaAmount)
-      xAmountWithSlippage = isTokenX ? varaAmount : xAmountWithSlippage
-      yAmountWithSlippage = !isTokenX ? yAmountWithSlippage : varaAmount
+      if (isTokenX) {
+        xAmountWithSlippage = varaAmount
+      } else {
+        yAmountWithSlippage = varaAmount
+      }
 
-      console.log('INVARIANT_GAS_LIMIT', INVARIANT_GAS_LIMIT)
-      const depositVaraTx = yield* call([invariant, invariant.depositVaraTx], varaAmount)
+      const depositVaraTx = yield* call(
+        [invariant, invariant.depositVaraTx],
+        varaAmount,
+        INVARIANT_GAS_LIMIT
+      )
 
-      txs.push(depositVaraTx)
+      txDepositVara.push(depositVaraTx)
     }
 
     if (tokenX !== VARA_ADDRESS && tokenXAmount !== 0n) {
@@ -148,10 +143,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       txs.push(depositTokenYTx)
     }
 
-    console.log('xamount', tokenXAmount)
-    console.log('yamount', tokenYAmount)
-    console.log('xAmountWithSlippage', xAmountWithSlippage)
-    console.log('yAmountWithSlippage', yAmountWithSlippage)
     const XTokenApproveTx = yield* call(
       [grc20, grc20.approveTx],
       invAddress,
@@ -178,6 +169,12 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         key: loaderSigningTx
       })
     )
+    try {
+      yield* call(batchTxs, api, hexWalletAddress, txDepositVara)
+    } catch (e) {
+      console.log(e)
+      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
+    }
 
     try {
       yield* call(batchTxs, api, hexWalletAddress, txs)
