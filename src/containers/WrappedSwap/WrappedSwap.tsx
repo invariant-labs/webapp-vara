@@ -20,7 +20,7 @@ import {
   tickMaps
 } from '@store/selectors/pools'
 import { simulateResult, swap as swapPool } from '@store/selectors/swap'
-import { balanceLoading, hexAddress, status, swapTokensDict } from '@store/selectors/wallet'
+import { balanceLoading, hexAddress, status, swapTokens } from '@store/selectors/wallet'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -42,7 +42,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const swap = useSelector(swapPool)
   const tickmap = useSelector(tickMaps)
   const allPools = useSelector(poolsArraySortedByFees)
-  const tokensDict = useSelector(swapTokensDict)
+  const tokensDict = useSelector(swapTokens)
   const isBalanceLoading = useSelector(balanceLoading)
   const { success, inProgress } = useSelector(swapPool)
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)

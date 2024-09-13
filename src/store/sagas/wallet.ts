@@ -22,6 +22,7 @@ import { openWalletSelectorModal } from '@utils/web3/selector'
 import { createLoaderKey, getTokenBalances } from '@utils/utils'
 import { GearApi, GearKeyring, HexString } from '@gear-js/api'
 import {
+  DEPOSIT_VARA_SAFE_GAS_AMOUNT,
   FAUCET_DEPLOYER_MNEMONIC,
   FAUCET_SAFE_TRANSACTION_FEE,
   FaucetTokenList,
@@ -289,7 +290,8 @@ export function* withdrawTokensPair(
   tokenY: HexString,
   invariant: Invariant,
   api: GearApi,
-  walletAddress: HexString
+  walletAddress: HexString,
+  isError?: boolean
 ) {
   const userBalances = yield* call([invariant, invariant.getUserBalances], walletAddress)
 
@@ -309,7 +311,11 @@ export function* withdrawTokensPair(
   if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
     const isTokenXVara = tokenX === VARA_ADDRESS
     if (userBalances.has(VARA_ADDRESS)) {
-      const withdrawVaraTx = yield* call([invariant, invariant.withdrawVaraTx], null)
+      const withdrawVaraTx = yield* call(
+        [invariant, invariant.withdrawVaraTx],
+        null,
+        DEPOSIT_VARA_SAFE_GAS_AMOUNT
+      )
       txs.push(withdrawVaraTx)
     }
 
@@ -331,14 +337,16 @@ export function* withdrawTokensPair(
     txs.push(withdrawTx)
   }
 
-  yield put(
-    snackbarsActions.add({
-      message: 'Withdrawing tokens from transaction...',
-      variant: 'pending',
-      persist: true,
-      key: loaderWithdrawTokens
-    })
-  )
+  if (isError) {
+    yield put(
+      snackbarsActions.add({
+        message: 'Withdrawing tokens from transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderWithdrawTokens
+      })
+    )
+  }
 
   try {
     yield* call(batchTxs, api, walletAddress, txs)

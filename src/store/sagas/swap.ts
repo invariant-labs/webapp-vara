@@ -9,7 +9,12 @@ import {
   simulateInvariantSwap
 } from '@invariant-labs/vara-sdk'
 import { PayloadAction } from '@reduxjs/toolkit'
-import { ErrorMessage, U128MAX } from '@store/consts/static'
+import {
+  DEPOSIT_VARA_SAFE_GAS_AMOUNT,
+  ErrorMessage,
+  POOL_SAFE_TRANSACTION_FEE,
+  U128MAX
+} from '@store/consts/static'
 import { actions, Simulate, Swap } from '@store/reducers/swap'
 import { pools, poolTicks, tickMaps } from '@store/selectors/pools'
 import {
@@ -79,22 +84,26 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       ? calculateAmountInWithSlippage(amountOut, sqrtPriceLimit, xToY, poolKey.feeTier.fee)
       : amountIn
 
+    const txDepositVara = []
     const txs = []
 
     if (tokenFrom === VARA_ADDRESS) {
       const varaBalance = yield* select(balance)
 
       const varaAmountInWithSlippage =
-        varaBalance > calculatedAmountIn ? calculatedAmountIn : varaBalance
+        varaBalance - POOL_SAFE_TRANSACTION_FEE > calculatedAmountIn ? calculatedAmountIn : amountIn
 
       calculatedAmountIn = varaAmountInWithSlippage
 
+      const minimalDeposit = api.existentialDeposit.toBigInt()
+
       const depositVaraTx = yield* call(
         [invariant, invariant.depositVaraTx],
-        varaAmountInWithSlippage
+        varaAmountInWithSlippage < minimalDeposit ? minimalDeposit : varaAmountInWithSlippage,
+        DEPOSIT_VARA_SAFE_GAS_AMOUNT
       )
 
-      txs.push(depositVaraTx)
+      txDepositVara.push(depositVaraTx)
     } else {
       if (calculatedAmountIn > maxTokenBalances[tokenFrom].balance) {
         calculatedAmountIn = amountIn
@@ -109,14 +118,16 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       txs.push(depositTx)
     }
 
-    const approveTx = yield* call(
-      [grc20, grc20.approveTx],
-      invAddress,
-      calculatedAmountIn,
-      tokenFrom
-    )
+    if (tokenFrom !== VARA_ADDRESS) {
+      const approveTx = yield* call(
+        [grc20, grc20.approveTx],
+        invAddress,
+        calculatedAmountIn,
+        tokenFrom
+      )
 
-    txs.unshift(approveTx)
+      txs.unshift(approveTx)
+    }
 
     yield put(
       snackbarsActions.add({
@@ -128,8 +139,10 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     )
 
     try {
+      yield* call(batchTxs, api, walletAddress, txDepositVara)
       yield* call(batchTxs, api, walletAddress, txs)
     } catch (e: any) {
+      console.log(e)
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
@@ -161,7 +174,6 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
         message: 'Tokens exchanged.',
         variant: 'success',
         persist: false
-        // txid: txResult.hash
       })
     )
 
@@ -214,7 +226,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       })
     )
 
-    yield* call(withdrawTokensPair, tokenFrom, tokenTo, invariant, api, walletAddress)
+    yield* call(withdrawTokensPair, tokenFrom, tokenTo, invariant, api, walletAddress, true)
   }
 }
 

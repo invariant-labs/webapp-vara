@@ -47,14 +47,19 @@ export const swapTokens = createSelector(
   tokens,
   balance,
   (allAccounts, tokens, varaBalance) => {
-    return Object.values(tokens).map(token => ({
-      ...token,
-      assetAddress: token.address,
-      balance:
-        token.address.toString() === VARA_ADDRESS
-          ? BigInt(Math.max(Number(varaBalance - EXTRA_BALANCE_TO_DEPOSIT_VARA), 0))
-          : allAccounts[token.address.toString()]?.balance ?? 0n
-    }))
+    const swapTokens: Record<string, SwapToken> = {}
+    Object.entries(tokens).forEach(([key, val]) => {
+      swapTokens[key] = {
+        ...val,
+        assetAddress: val.address,
+        balance:
+          val.address.toString() === VARA_ADDRESS
+            ? BigInt(Math.max(Number(varaBalance - EXTRA_BALANCE_TO_DEPOSIT_VARA), 0))
+            : allAccounts[val.address.toString()]?.balance ?? BigInt(0)
+      }
+    })
+
+    return swapTokens
   }
 )
 

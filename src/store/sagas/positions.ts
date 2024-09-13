@@ -113,9 +113,11 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         yAmountWithSlippage = varaAmount
       }
 
+      const minimalDeposit = api.existentialDeposit.toBigInt()
+
       const depositVaraTx = yield* call(
         [invariant, invariant.depositVaraTx],
-        varaAmount,
+        varaAmount < minimalDeposit ? minimalDeposit : varaAmount,
         DEPOSIT_VARA_SAFE_GAS_AMOUNT
       )
 
@@ -270,7 +272,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       )
     }
 
-    yield* call(withdrawTokensPair, tokenX, tokenY, invariant, api, hexWalletAddress)
+    yield* call(withdrawTokensPair, tokenX, tokenY, invariant, api, hexWalletAddress, true)
   }
 }
 
@@ -557,7 +559,15 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
       }
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
-    yield* call(withdrawTokensPair, addressTokenX, addressTokenY, invariant, api, walletAddress)
+    yield* call(
+      withdrawTokensPair,
+      addressTokenX,
+      addressTokenY,
+      invariant,
+      api,
+      walletAddress,
+      true
+    )
 
     closeSnackbar(loaderSigningTx)
     yield put(snackbarsActions.remove(loaderSigningTx))
