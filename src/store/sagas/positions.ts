@@ -32,6 +32,7 @@ import {
   calculateTokenAmountsWithSlippage
 } from '@invariant-labs/vara-sdk/target/utils'
 import {
+  DEPOSIT_VARA_SAFE_GAS_AMOUNT,
   EMPTY_POSITION,
   ErrorMessage,
   POOL_SAFE_TRANSACTION_FEE,
@@ -40,7 +41,7 @@ import {
 import { closeSnackbar } from 'notistack'
 import { Pool, Position, Tick } from '@invariant-labs/vara-sdk'
 import { fetchBalances, getWallet, withdrawTokensPair } from './wallet'
-import { INVARIANT_GAS_LIMIT, VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
+import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 
 function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator {
   const {
@@ -109,7 +110,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       const depositVaraTx = yield* call(
         [invariant, invariant.depositVaraTx],
         varaAmount,
-        INVARIANT_GAS_LIMIT
+        DEPOSIT_VARA_SAFE_GAS_AMOUNT
       )
 
       txDepositVara.push(depositVaraTx)
@@ -225,7 +226,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         message: 'Position created.',
         variant: 'success',
         persist: false
-        // txid: txResult2.toString()
       })
     )
 

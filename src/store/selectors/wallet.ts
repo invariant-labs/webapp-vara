@@ -5,7 +5,7 @@ import { AnyProps, keySelectors } from './helpers'
 import { tokens } from './pools'
 import { decodeAddress, HexString } from '@gear-js/api'
 import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
-import { POOL_SAFE_TRANSACTION_FEE, SWAP_SAFE_TRANSACTION_FEE } from '@store/consts/static'
+import { EXTRA_BALANCE_TO_DEPOSIT_VARA } from '@store/consts/static'
 
 const store = (s: AnyProps) => s[walletSliceName] as IVaraWallet
 
@@ -52,7 +52,7 @@ export const swapTokens = createSelector(
       assetAddress: token.address,
       balance:
         token.address.toString() === VARA_ADDRESS
-          ? BigInt(Math.max(Number(varaBalance - SWAP_SAFE_TRANSACTION_FEE), 0))
+          ? BigInt(Math.max(Number(varaBalance - EXTRA_BALANCE_TO_DEPOSIT_VARA), 0))
           : allAccounts[token.address.toString()]?.balance ?? 0n
     }))
   }
@@ -70,7 +70,7 @@ export const poolTokens = createSelector(
         assetAddress: val.address,
         balance:
           val.address.toString() === VARA_ADDRESS
-            ? BigInt(Math.max(Number(varaBalance - POOL_SAFE_TRANSACTION_FEE), 0))
+            ? BigInt(Math.max(Number(varaBalance - EXTRA_BALANCE_TO_DEPOSIT_VARA), 0))
             : allAccounts[val.address.toString()]?.balance ?? BigInt(0)
       }
     })
