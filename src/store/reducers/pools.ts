@@ -59,22 +59,10 @@ export interface UpdateTick {
   poolKey: PoolKey
   tickStructure: LiquidityTick[]
 }
-export interface DeleteTick {
-  address: string
-  index: number
-}
-export interface UpdateTicks extends DeleteTick {
-  tick: Tick
-}
-
-export interface UpdateTickmap {
-  address: string
-  bitmap: number[]
-}
 
 export interface FetchTicksAndTickMaps {
-  tokenFrom: string
-  tokenTo: string
+  tokenFrom: HexString
+  tokenTo: HexString
   allPools: PoolWithPoolKey[]
 }
 

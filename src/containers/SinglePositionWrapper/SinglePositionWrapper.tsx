@@ -74,8 +74,8 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
     if (position?.tokenX && position?.tokenY) {
       dispatch(
         poolsActions.getTicksAndTickMaps({
-          tokenFrom: position.tokenX.address,
-          tokenTo: position.tokenY.address,
+          tokenFrom: position.tokenX.assetAddress,
+          tokenTo: position.tokenY.assetAddress,
           allPools
         })
       )
