@@ -88,11 +88,11 @@ export function* handleAirdrop(): Generator {
   if (FAUCET_SAFE_TRANSACTION_FEE > walletBalance) {
     return yield* put(
       snackbarsActions.add({
-        message: 'Insufficient TVARA balance.',
+        message: 'Insufficient VARA balance.',
         variant: 'error',
         persist: false,
         link: {
-          label: 'GET TVARA',
+          label: 'GET VARA',
           href: 'https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network'
         }
       })
@@ -337,16 +337,14 @@ export function* withdrawTokensPair(
     txs.push(withdrawTx)
   }
 
-  if (isError) {
-    yield put(
-      snackbarsActions.add({
-        message: 'Withdrawing tokens from transaction...',
-        variant: 'pending',
-        persist: true,
-        key: loaderWithdrawTokens
-      })
-    )
-  }
+  yield put(
+    snackbarsActions.add({
+      message: isError ? 'Withdrawing tokens from transaction...' : 'Withdrawing tokens...',
+      variant: 'pending',
+      persist: true,
+      key: loaderWithdrawTokens
+    })
+  )
 
   try {
     yield* call(batchTxs, api, walletAddress, txs)

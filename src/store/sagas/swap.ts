@@ -143,6 +143,20 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       yield* call(batchTxs, api, walletAddress, txs)
     } catch (e: any) {
       console.log(e)
+      if (e?.name === 'InsufficientBalance') {
+        yield* put(
+          snackbarsActions.add({
+            message: 'Insufficient VARA balance to pass transaction.',
+            variant: 'error',
+            persist: false,
+            link: {
+              label: 'GET VARA',
+              href: 'https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network'
+            }
+          })
+        )
+      }
+
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
@@ -158,8 +172,23 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
 
     try {
       yield* call(batchTxs, api, walletAddress, [swapTx])
-    } catch (e) {
+    } catch (e: any) {
       console.log(e)
+
+      if (e?.name === 'InsufficientBalance') {
+        yield* put(
+          snackbarsActions.add({
+            message: 'Insufficient VARA balance to pass transaction.',
+            variant: 'error',
+            persist: false,
+            link: {
+              label: 'GET VARA',
+              href: 'https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network'
+            }
+          })
+        )
+      }
+
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 

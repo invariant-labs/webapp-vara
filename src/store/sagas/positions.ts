@@ -184,8 +184,23 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     try {
       yield* call(batchTxs, api, hexWalletAddress, txDepositVara)
       yield* call(batchTxs, api, hexWalletAddress, txs)
-    } catch (e) {
+    } catch (e: any) {
       console.log(e)
+
+      if (e?.name === 'InsufficientBalance') {
+        yield* put(
+          snackbarsActions.add({
+            message: 'Insufficient VARA balance to pass transaction.',
+            variant: 'error',
+            persist: false,
+            link: {
+              label: 'GET VARA',
+              href: 'https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network'
+            }
+          })
+        )
+      }
+
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
@@ -215,8 +230,23 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
 
     try {
       yield* call(batchTxs, api, hexWalletAddress, txs2)
-    } catch (e) {
+    } catch (e: any) {
       console.log(e)
+
+      if (e?.name === 'InsufficientBalance') {
+        yield* put(
+          snackbarsActions.add({
+            message: 'Insufficient VARA balance to pass transaction.',
+            variant: 'error',
+            persist: false,
+            link: {
+              label: 'GET VARA',
+              href: 'https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network'
+            }
+          })
+        )
+      }
+
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
     closeSnackbar(loaderSigningTx)
@@ -416,7 +446,23 @@ export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
 
     try {
       yield* call(batchTxs, api, walletAddress, [claimTx])
-    } catch (e) {
+    } catch (e: any) {
+      console.log(e)
+
+      if (e?.name === 'InsufficientBalance') {
+        yield* put(
+          snackbarsActions.add({
+            message: 'Insufficient VARA balance to pass transaction.',
+            variant: 'error',
+            persist: false,
+            link: {
+              label: 'GET VARA',
+              href: 'https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network'
+            }
+          })
+        )
+      }
+
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
@@ -579,7 +625,6 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
         message: 'Position closed.',
         variant: 'success',
         persist: false
-        // txid: txResult.hash
       })
     )
 
