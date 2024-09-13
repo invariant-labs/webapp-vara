@@ -36,7 +36,8 @@ import {
   EMPTY_POSITION,
   ErrorMessage,
   POOL_SAFE_TRANSACTION_FEE,
-  POSITIONS_PER_QUERY
+  POSITIONS_PER_QUERY,
+  SAFE_SLIPPAGE_FOR_INIT_POOL
 } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
 import { Pool, Position, Tick } from '@invariant-labs/vara-sdk'
@@ -52,9 +53,10 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     tokenXAmount,
     tokenYAmount,
     liquidityDelta,
-    initPool,
-    slippageTolerance
+    initPool
   } = action.payload
+  let { slippageTolerance } = action.payload
+
   const { tokenX, tokenY, feeTier } = poolKeyData
   const loaderCreatePosition = createLoaderKey()
   const loaderSigningTx = createLoaderKey()
@@ -66,6 +68,10 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
   const grc20 = yield* getGRC20()
   const api = yield* getApi()
   const invariant = yield* getInvariant()
+
+  if (initPool && slippageTolerance < SAFE_SLIPPAGE_FOR_INIT_POOL) {
+    slippageTolerance = SAFE_SLIPPAGE_FOR_INIT_POOL
+  }
 
   try {
     yield put(
@@ -144,23 +150,26 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       txs.push(depositTokenYTx)
     }
 
-    const XTokenApproveTx = yield* call(
-      [grc20, grc20.approveTx],
-      invAddress,
-      xAmountWithSlippage,
-      tokenX
-    )
+    if (tokenX !== VARA_ADDRESS) {
+      const XTokenApproveTx = yield* call(
+        [grc20, grc20.approveTx],
+        invAddress,
+        xAmountWithSlippage,
+        tokenX
+      )
 
-    txs.unshift(XTokenApproveTx)
+      txs.unshift(XTokenApproveTx)
+    }
 
-    const YTokenApproveTx = yield* call(
-      [grc20, grc20.approveTx],
-      invAddress,
-      yAmountWithSlippage,
-      tokenY
-    )
-
-    txs.unshift(YTokenApproveTx)
+    if (tokenY !== VARA_ADDRESS) {
+      const YTokenApproveTx = yield* call(
+        [grc20, grc20.approveTx],
+        invAddress,
+        yAmountWithSlippage,
+        tokenY
+      )
+      txs.unshift(YTokenApproveTx)
+    }
 
     yield put(
       snackbarsActions.add({
@@ -172,12 +181,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     )
     try {
       yield* call(batchTxs, api, hexWalletAddress, txDepositVara)
-    } catch (e) {
-      console.log(e)
-      throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
-    }
-
-    try {
       yield* call(batchTxs, api, hexWalletAddress, txs)
     } catch (e) {
       console.log(e)

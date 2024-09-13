@@ -119,6 +119,7 @@ export const POOL_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.32 * 10 ** 12))
 export const EXTRA_BALANCE_TO_DEPOSIT_VARA = BigInt(Math.ceil(11 * 10 ** 12))
 export const DEPOSIT_VARA_SAFE_GAS_AMOUNT = 10_000_000_000n
 export const FAUCET_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.001 * 10 ** 12))
+export const SAFE_SLIPPAGE_FOR_INIT_POOL = 1500000000n
 
 export enum ErrorMessage {
   TRANSACTION_SIGNING_ERROR = 'Error while signing transaction.'
