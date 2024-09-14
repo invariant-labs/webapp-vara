@@ -17,7 +17,7 @@ import {
   TokenPriceData
 } from './types'
 import { testnetBestTiersCreator } from '@utils/utils'
-import { POSITIONS_ENTRIES_LIMIT } from '@invariant-labs/vara-sdk/target/consts'
+import { POSITIONS_ENTRIES_LIMIT, VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 
 export enum RPC {
   TEST = 'wss://testnet.vara.network',
@@ -84,16 +84,16 @@ export const USDC: Token = {
   coingeckoId: 'usd-coin'
 }
 
-// export const WVARA: Token = {
-//   symbol: 'WVARA',
-//   address: TESTNET_WAZERO_ADDRESS,
-//   decimals: 12n,
-//   name: 'Aleph Zero',
-//   logoURI: 'https://assets.coingecko.com/coins/images/17212/standard/azero-logo_coingecko.png',
-//   coingeckoId: 'aleph-zero'
-// }
+export const VARA: Token = {
+  symbol: 'VARA',
+  address: VARA_ADDRESS,
+  decimals: 12n,
+  name: 'Vara',
+  logoURI: 'https://assets.coingecko.com/coins/images/31458/standard/vara.jpeg?1696530272',
+  coingeckoId: 'vara'
+}
 
-export const DEFAULT_TOKENS = [BTC, ETH, USDC]
+export const DEFAULT_TOKENS = [BTC, ETH, USDC, VARA]
 
 export const bestTiers: Record<Network, BestTier[]> = {
   [Network.Testnet]: testnetBestTiersCreator(),
@@ -102,75 +102,9 @@ export const bestTiers: Record<Network, BestTier[]> = {
 }
 
 export const commonTokensForNetworks: Record<Network, HexString[]> = {
-  [Network.Testnet]: [BTC.address, ETH.address, USDC.address],
+  [Network.Testnet]: [BTC.address, ETH.address, USDC.address, VARA.address],
   [Network.Mainnet]: [],
   [Network.Local]: []
-}
-
-export const DEFAULT_INVARIANT_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 100000000000,
-  proofSize: 100000000000
-}
-
-export const DEFAULT_WAZERO_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 5000000000,
-  proofSize: 5000000000
-}
-
-export const INVARIANT_SWAP_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 250000000000,
-  proofSize: 500000
-}
-
-export const INVARIANT_WITHDRAW_ALL_WAZERO = {
-  storageDepositLimit: null,
-  refTime: 25000000000,
-  proofSize: 250000
-}
-
-export const INVARIANT_CREATE_POOL_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 10000000000,
-  proofSize: 250000
-}
-
-export const INVARIANT_CREATE_POSITION_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 25000000000,
-  proofSize: 500000
-}
-
-export const INVARIANT_CLAIM_FEE_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 25000000000,
-  proofSize: 500000
-}
-
-export const INVARIANT_REMOVE_POSITION_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 25000000000,
-  proofSize: 250000
-}
-
-export const PSP22_APPROVE_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 2500000000,
-  proofSize: 50000
-}
-
-export const WAZERO_DEPOSIT_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 2500000000,
-  proofSize: 50000
-}
-
-export const WAZERO_WITHDRAW_OPTIONS = {
-  storageDepositLimit: null,
-  refTime: 2500000000,
-  proofSize: 50000
 }
 
 export const ALL_FEE_TIERS_DATA = FEE_TIERS.map((tier, index) => ({
@@ -182,7 +116,10 @@ export const U128MAX = 2n ** 128n - 1n
 
 export const SWAP_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.25 * 10 ** 12))
 export const POOL_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.32 * 10 ** 12))
+export const EXTRA_BALANCE_TO_DEPOSIT_VARA = BigInt(Math.ceil(11 * 10 ** 12))
+export const DEPOSIT_VARA_SAFE_GAS_AMOUNT = 10_000_000_000n
 export const FAUCET_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.001 * 10 ** 12))
+export const SAFE_SLIPPAGE_FOR_INIT_POOL = 1500000000n
 
 export enum ErrorMessage {
   TRANSACTION_SIGNING_ERROR = 'Error while signing transaction.'
@@ -249,7 +186,8 @@ export const defaultPrefixConfig: PrefixConfig = {
 export const addressTickerMap: { [key: string]: string } = {
   BTC: TESTNET_BTC_ADDRESS,
   ETH: TESTNET_ETH_ADDRESS,
-  USDC: TESTNET_USDC_ADDRESS
+  USDC: TESTNET_USDC_ADDRESS,
+  VARA: VARA_ADDRESS
 }
 
 export const reversedAddressTickerMap = Object.fromEntries(

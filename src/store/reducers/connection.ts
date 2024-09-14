@@ -1,5 +1,5 @@
 import { ActorId, Network } from '@invariant-labs/vara-sdk'
-import { TESTNET_INVARIANT_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
+import { TESTNET_INVARIANT_ADDRESS, VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { RPC } from '@store/consts/static'
 import { PayloadType } from '@store/consts/types'
@@ -17,7 +17,7 @@ export interface IVaraConnectionStore {
   blockNumber: number
   rpcAddress: string
   invariantAddress: ActorId
-  // wrappedAZEROAddress: string
+  wrappedVARAAddress: string
 }
 
 export const defaultState: IVaraConnectionStore = {
@@ -26,8 +26,8 @@ export const defaultState: IVaraConnectionStore = {
   networkType: Network.Testnet,
   blockNumber: 0,
   rpcAddress: localStorage.getItem(`INVARIANT_RPC_VARA_${Network.Testnet}`) || RPC.TEST,
-  invariantAddress: TESTNET_INVARIANT_ADDRESS
-  // wrappedAZEROAddress: TESTNET_WAZERO_ADDRESS
+  invariantAddress: TESTNET_INVARIANT_ADDRESS,
+  wrappedVARAAddress: VARA_ADDRESS
 }
 export const connectionSliceName = 'connection'
 const connectionSlice = createSlice({

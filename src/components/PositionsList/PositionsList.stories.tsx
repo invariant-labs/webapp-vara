@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>
 const data = [
   {
     tokenXName: 'BTC',
-    tokenYName: 'AZERO',
+    tokenYName: 'VARA',
     tokenXIcon: '',
     tokenYIcon: '',
     min: 2149.6,
@@ -36,7 +36,7 @@ const data = [
   },
   {
     tokenXName: 'BTC',
-    tokenYName: 'AZERO',
+    tokenYName: 'VARA',
     tokenXIcon: '',
     tokenYIcon: '',
     min: 2149.6,
@@ -52,7 +52,7 @@ const data = [
   },
   {
     tokenXName: 'BTC',
-    tokenYName: 'AZERO',
+    tokenYName: 'VARA',
     tokenXIcon: '',
     tokenYIcon: '',
     min: 2149.6,
@@ -68,7 +68,7 @@ const data = [
   },
   {
     tokenXName: 'BTC',
-    tokenYName: 'AZERO',
+    tokenYName: 'VARA',
     tokenXIcon: '',
     tokenYIcon: '',
     min: 2149.6,

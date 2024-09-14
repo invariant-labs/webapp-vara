@@ -44,8 +44,7 @@ import {
   balanceLoading,
   hexAddress,
   status,
-  swapTokens,
-  swapTokensDict
+  poolTokens
 } from '@store/selectors/wallet'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { VariantType } from 'notistack'
@@ -66,8 +65,6 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   initialFee
 }) => {
   const dispatch = useDispatch()
-  // const walletAddress = useSelector(address)
-  const tokens = useSelector(swapTokensDict)
   const walletStatus = useSelector(status)
   const allPools = useSelector(poolsArraySortedByFees)
   const allPoolKeys = useSelector(poolKeys)
@@ -91,8 +88,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const currentNetwork = useSelector(networkType)
   const walletAddress = useSelector(hexAddress)
-  const tokensList = useSelector(swapTokens)
-
+  const tokens = useSelector(poolTokens)
   const [poolIndex, setPoolIndex] = useState<number | null>(null)
 
   const [poolKey, setPoolKey] = useState<string>('')
@@ -310,11 +306,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   const addTokenHandler = async (address: HexString) => {
     const grc20 = await grc20Singleton.getInstance()
     const api = await apiSingleton.loadInstance(network)
-    if (
-      grc20 &&
-      api !== null &&
-      tokensList.findIndex(token => token.address.toString() === address) === -1
-    ) {
+    if (grc20 && api !== null && !tokens[walletAddress]) {
       getNewTokenOrThrow(address, grc20, walletAddress)
         .then(data => {
           dispatch(poolsActions.addTokens(data))

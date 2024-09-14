@@ -389,11 +389,11 @@ export const getTokenDataByAddresses = async (
 export const getTokenBalances = async (
   tokens: HexString[],
   grc20: FungibleToken,
-  address: ActorId
+  walletAddress: ActorId
 ): Promise<[HexString, bigint][]> => {
   const promises: Promise<bigint>[] = []
-  tokens.map(token => {
-    promises.push(grc20.balanceOf(address, token))
+  tokens.map(tokenAddress => {
+    promises.push(grc20.balanceOf(walletAddress, tokenAddress))
   })
 
   const results = await Promise.all(promises)

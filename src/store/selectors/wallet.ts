@@ -4,6 +4,8 @@ import { IVaraWallet, ITokenBalance, walletSliceName } from '@store/reducers/wal
 import { AnyProps, keySelectors } from './helpers'
 import { tokens } from './pools'
 import { decodeAddress, HexString } from '@gear-js/api'
+import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
+import { EXTRA_BALANCE_TO_DEPOSIT_VARA } from '@store/consts/static'
 
 const store = (s: AnyProps) => s[walletSliceName] as IVaraWallet
 
@@ -40,45 +42,62 @@ export interface SwapToken {
   coingeckoId?: string
 }
 
-export const swapTokens = createSelector(tokensBalances, tokens, balance, (allAccounts, tokens) => {
-  return Object.values(tokens).map(token => ({
-    ...token,
-    assetAddress: token.address,
-    // balance:
-    //   token.address.toString() === TESTNET_WAZERO_ADDRESS
-    //     ? BigInt(Math.max(Number(a0Balance - SWAP_SAFE_TRANSACTION_FEE), 0))
-    //     : allAccounts[token.address.toString()]?.balance ?? 0n
-    balance: allAccounts[token.address]?.balance ?? 0n
-  }))
-})
-
-export const poolTokens = createSelector(tokensBalances, tokens, balance, (allAccounts, tokens) => {
-  return Object.values(tokens).map(token => ({
-    ...token,
-    assetAddress: token.address,
-    // balance:
-    //   token.address.toString() === TESTNET_WAZERO_ADDRESS
-    //     ? BigInt(Math.max(Number(a0Balance - POOL_SAFE_TRANSACTION_FEE), 0))
-    //     : allAccounts[token.address.toString()]?.balance ?? 0n
-    balance: allAccounts[token.address]?.balance ?? 0n
-  }))
-})
-
-export const swapTokensDict = createSelector(
+export const swapTokens = createSelector(
   tokensBalances,
   tokens,
   balance,
-  (allAccounts, tokens) => {
+  (allAccounts, tokens, varaBalance) => {
     const swapTokens: Record<string, SwapToken> = {}
     Object.entries(tokens).forEach(([key, val]) => {
       swapTokens[key] = {
         ...val,
         assetAddress: val.address,
-        // balance:
-        //   val.address.toString() === TESTNET_WAZERO_ADDRESS
-        //     ? BigInt(a0Balance)
-        //     : allAccounts[val.address.toString()]?.balance ?? BigInt(0)
-        balance: allAccounts[val.address]?.balance ?? BigInt(0)
+        balance:
+          val.address.toString() === VARA_ADDRESS
+            ? BigInt(Math.max(Number(varaBalance - EXTRA_BALANCE_TO_DEPOSIT_VARA), 0))
+            : allAccounts[val.address.toString()]?.balance ?? BigInt(0)
+      }
+    })
+
+    return swapTokens
+  }
+)
+
+export const poolTokens = createSelector(
+  tokensBalances,
+  tokens,
+  balance,
+  (allAccounts, tokens, varaBalance) => {
+    const poolTokens: Record<string, SwapToken> = {}
+    Object.entries(tokens).forEach(([key, val]) => {
+      poolTokens[key] = {
+        ...val,
+        assetAddress: val.address,
+        balance:
+          val.address.toString() === VARA_ADDRESS
+            ? BigInt(Math.max(Number(varaBalance - EXTRA_BALANCE_TO_DEPOSIT_VARA), 0))
+            : allAccounts[val.address.toString()]?.balance ?? BigInt(0)
+      }
+    })
+
+    return poolTokens
+  }
+)
+
+export const swapTokensDict = createSelector(
+  tokensBalances,
+  tokens,
+  balance,
+  (allAccounts, tokens, varaBalance) => {
+    const swapTokens: Record<string, SwapToken> = {}
+    Object.entries(tokens).forEach(([key, val]) => {
+      swapTokens[key] = {
+        ...val,
+        assetAddress: val.address,
+        balance:
+          val.address.toString() === VARA_ADDRESS
+            ? BigInt(varaBalance)
+            : allAccounts[val.address.toString()]?.balance ?? BigInt(0)
       }
     })
 

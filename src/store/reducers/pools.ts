@@ -9,9 +9,10 @@ import {
   Tick,
   Tickmap
 } from '@invariant-labs/vara-sdk'
+import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 import { Liquidity } from '@invariant-labs/vara-sdk/target/schema'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
-import { BTC, ETH, USDC } from '@store/consts/static'
+import { BTC, ETH, USDC, VARA } from '@store/consts/static'
 import { PayloadType, Token } from '@store/consts/types'
 import { poolKeyToString } from '@utils/utils'
 
@@ -58,22 +59,10 @@ export interface UpdateTick {
   poolKey: PoolKey
   tickStructure: LiquidityTick[]
 }
-export interface DeleteTick {
-  address: string
-  index: number
-}
-export interface UpdateTicks extends DeleteTick {
-  tick: Tick
-}
-
-export interface UpdateTickmap {
-  address: string
-  bitmap: number[]
-}
 
 export interface FetchTicksAndTickMaps {
-  tokenFrom: string
-  tokenTo: string
+  tokenFrom: HexString
+  tokenTo: HexString
   allPools: PoolWithPoolKey[]
 }
 
@@ -81,7 +70,8 @@ export const defaultState: IPoolsStore = {
   tokens: {
     [TESTNET_BTC_ADDRESS]: BTC,
     [TESTNET_ETH_ADDRESS]: ETH,
-    [TESTNET_USDC_ADDRESS]: USDC
+    [TESTNET_USDC_ADDRESS]: USDC,
+    [VARA_ADDRESS]: VARA
   },
   pools: {},
   poolKeys: {},
