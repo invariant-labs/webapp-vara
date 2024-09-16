@@ -100,7 +100,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const addTokenHandler = async (address: HexString) => {
     const grc20 = await grc20Singleton.getInstance()
     const api = await apiSingleton.loadInstance(network)
-    if (grc20 && api !== null && !tokensDict[walletAddress]) {
+    if (grc20 && api !== null && !tokensDict[address]) {
       getNewTokenOrThrow(address, grc20, walletAddress)
         .then(data => {
           dispatch(poolsActions.addTokens(data))
