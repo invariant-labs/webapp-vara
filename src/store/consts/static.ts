@@ -116,8 +116,12 @@ export const U128MAX = 2n ** 128n - 1n
 
 export const SWAP_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.25 * 10 ** 12))
 export const POOL_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.32 * 10 ** 12))
-export const EXTRA_BALANCE_TO_DEPOSIT_VARA = BigInt(Math.ceil(11 * 10 ** 12))
+export const EXTRA_BALANCE_TO_DEPOSIT_VARA = BigInt(Math.ceil(3 * 10 ** 12))
 export const DEPOSIT_VARA_SAFE_GAS_AMOUNT = 10_000_000_000n
+export const DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT = 50_000_000_000n
+export const DEPOSIT_OR_WITHDRAW_TOKEN_PAIR_GAS_AMOUNT = 100_000_000_000n
+export const INVARIANT_ACTION_GAS_AMOUNT = 10_000_000_000n
+export const APPROVE_TOKEN_GAS_AMOUNT = 5_000_000_000n
 export const FAUCET_SAFE_TRANSACTION_FEE = BigInt(Math.ceil(0.001 * 10 ** 12))
 export const SAFE_SLIPPAGE_FOR_INIT_POOL = 1500000000n
 

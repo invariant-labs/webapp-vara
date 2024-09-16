@@ -22,6 +22,8 @@ import { openWalletSelectorModal } from '@utils/web3/selector'
 import { createLoaderKey, getTokenBalances } from '@utils/utils'
 import { GearApi, GearKeyring, HexString } from '@gear-js/api'
 import {
+  DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT,
+  DEPOSIT_OR_WITHDRAW_TOKEN_PAIR_GAS_AMOUNT,
   DEPOSIT_VARA_SAFE_GAS_AMOUNT,
   FAUCET_DEPLOYER_MNEMONIC,
   FAUCET_SAFE_TRANSACTION_FEE,
@@ -323,7 +325,8 @@ export function* withdrawTokensPair(
       const withdrawSecondTokenTx = yield* call(
         [invariant, invariant.withdrawSingleTokenTx],
         isTokenXVara ? tokenY : tokenX,
-        null
+        null,
+        DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
       )
 
       txs.push(withdrawSecondTokenTx)
@@ -332,7 +335,8 @@ export function* withdrawTokensPair(
     const withdrawTx = yield* call(
       [invariant, invariant.withdrawTokenPairTx],
       [tokenX, null] as [ActorId, bigint | null],
-      [tokenY, null] as [ActorId, bigint | null]
+      [tokenY, null] as [ActorId, bigint | null],
+      DEPOSIT_OR_WITHDRAW_TOKEN_PAIR_GAS_AMOUNT
     )
     txs.push(withdrawTx)
   }
