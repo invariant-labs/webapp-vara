@@ -40,12 +40,7 @@ import {
   poolsArraySortedByFees
 } from '@store/selectors/pools'
 import { initPosition, plotTicks, shouldNotUpdateRange } from '@store/selectors/positions'
-import {
-  balanceLoading,
-  hexAddress,
-  status,
-  poolTokens
-} from '@store/selectors/wallet'
+import { balanceLoading, hexAddress, status, poolTokens, balance } from '@store/selectors/wallet'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { VariantType } from 'notistack'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -71,6 +66,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   const poolsData = useSelector(pools)
   const loadingTicksAndTickMaps = useSelector(isLoadingTicksAndTickMaps)
   const isBalanceLoading = useSelector(balanceLoading)
+  const varaBalance = useSelector(balance)
   const shouldNotUpdatePriceRange = useSelector(shouldNotUpdateRange)
   const network = useSelector(networkType)
 
@@ -661,6 +657,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       onlyUserPositions={onlyUserPositions}
       setOnlyUserPositions={setOnlyUserPositions}
       network={network}
+      varaBalance={varaBalance}
     />
   )
 }

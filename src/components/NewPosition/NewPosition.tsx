@@ -103,6 +103,7 @@ export interface INewPosition {
   onlyUserPositions: boolean
   setOnlyUserPositions: (val: boolean) => void
   network: Network
+  varaBalance: bigint
 }
 
 export const NewPosition: React.FC<INewPosition> = ({
@@ -154,8 +155,9 @@ export const NewPosition: React.FC<INewPosition> = ({
   unblockUpdatePriceRange,
   isGetLiquidityError,
   onlyUserPositions,
-  setOnlyUserPositions
+  setOnlyUserPositions,
   // network
+  varaBalance
 }) => {
   const { classes } = useStyles()
   const navigate = useNavigate()
@@ -675,6 +677,7 @@ export const NewPosition: React.FC<INewPosition> = ({
           isGetLiquidityError={isGetLiquidityError}
           ticksLoading={ticksLoading}
           // network={network}
+          varaBalance={varaBalance}
         />
         <Hidden mdUp>
           <Grid container justifyContent='end' mb={2}>
