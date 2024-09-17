@@ -18,6 +18,7 @@ import {
   InitPositionData,
   actions
 } from '@store/reducers/positions'
+import { actions as walletActions } from '@store/reducers/wallet'
 import { poolsArraySortedByFees, tickMaps, tokens } from '@store/selectors/pools'
 import { all, call, fork, join, put, select, spawn, takeEvery, takeLatest } from 'typed-redux-saga'
 import { fetchTicksAndTickMaps, fetchTokens } from './pools'
@@ -44,7 +45,7 @@ import {
 } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
 import { Pool, Position, Tick } from '@invariant-labs/vara-sdk'
-import { fetchBalances, getWallet, withdrawTokensPair } from './wallet'
+import { fetchBalances, getWallet, withdrawTokenPairTx } from './wallet'
 import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 
 function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator {
@@ -97,10 +98,8 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       true
     )
 
-    const approveTxs = []
+    const txs1 = []
     const txDepositVara = []
-    const txFirstDeposit = []
-    const txSecondDeposit = []
 
     if (
       (tokenX === VARA_ADDRESS && tokenXAmount !== 0n) ||
@@ -144,7 +143,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         validatedTokenXAmount as bigint,
         DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
       )
-      txFirstDeposit.push(depositTokenXTx)
+      txs1.push(depositTokenXTx)
     }
 
     if (tokenY !== VARA_ADDRESS && tokenYAmount !== 0n) {
@@ -159,7 +158,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         validatedTokenYAmount as bigint,
         DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
       )
-      txSecondDeposit.push(depositTokenYTx)
+      txs1.push(depositTokenYTx)
     }
 
     if (tokenX !== VARA_ADDRESS) {
@@ -171,7 +170,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         APPROVE_TOKEN_GAS_AMOUNT
       )
 
-      approveTxs.unshift(XTokenApproveTx)
+      txs1.unshift(XTokenApproveTx)
     }
 
     if (tokenY !== VARA_ADDRESS) {
@@ -182,7 +181,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         tokenY,
         APPROVE_TOKEN_GAS_AMOUNT
       )
-      approveTxs.unshift(YTokenApproveTx)
+      txs1.unshift(YTokenApproveTx)
     }
 
     yield put(
@@ -194,10 +193,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       })
     )
     try {
-      yield* call(batchTxs, api, hexWalletAddress, txDepositVara)
-      yield* call(batchTxs, api, hexWalletAddress, approveTxs)
-      yield* call(batchTxs, api, hexWalletAddress, txFirstDeposit)
-      yield* call(batchTxs, api, hexWalletAddress, txSecondDeposit)
+      yield* call(batchTxs, api, hexWalletAddress, [...txDepositVara, ...txs1])
     } catch (e: any) {
       console.log(e)
 
@@ -218,7 +214,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
-    const txs = []
+    const txs2 = []
 
     if (initPool) {
       const createPoolTx = yield* call(
@@ -228,7 +224,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
         INVARIANT_ACTION_GAS_AMOUNT
       )
 
-      txs.push(createPoolTx)
+      txs2.push(createPoolTx)
     }
 
     const tx = yield* call(
@@ -242,10 +238,27 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       INVARIANT_ACTION_GAS_AMOUNT
     )
 
-    txs.push(tx)
+    txs2.push(tx)
+
+    const withdrawTxs = yield* call(
+      withdrawTokenPairTx,
+      tokenX,
+      tokenY,
+      invariant,
+      hexWalletAddress
+    )
+    if (withdrawTxs?.length) {
+      txs2.push(...withdrawTxs)
+    }
 
     try {
-      yield* call(batchTxs, api, hexWalletAddress, txs)
+      yield* call(batchTxs, api, hexWalletAddress, txs2)
+
+      if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
+        yield put(walletActions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
+      } else {
+        yield put(walletActions.getBalances([tokenX, tokenY]))
+      }
     } catch (e: any) {
       console.log(e)
 
@@ -286,8 +299,6 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
     yield* put(actions.addPosition(position))
 
     yield* put(poolsActions.getPoolKeys())
-
-    yield* call(withdrawTokensPair, tokenX, tokenY, invariant, api, hexWalletAddress)
   } catch (e: any) {
     if (e.failedTxs) {
       console.log(e.failedTxs)
@@ -318,7 +329,57 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       )
     }
 
-    yield* call(withdrawTokensPair, tokenX, tokenY, invariant, api, hexWalletAddress, true)
+    const withdrawTxs = yield* call(
+      withdrawTokenPairTx,
+      tokenX,
+      tokenY,
+      invariant,
+      hexWalletAddress
+    )
+    if (!withdrawTxs) {
+      return
+    }
+    const loaderWithdrawTokens = createLoaderKey()
+
+    yield put(
+      snackbarsActions.add({
+        message: 'Withdrawing tokens from transaction...',
+        variant: 'pending',
+        persist: true,
+        key: loaderWithdrawTokens
+      })
+    )
+
+    try {
+      yield* call(batchTxs, api, hexWalletAddress, withdrawTxs)
+
+      if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
+        yield put(walletActions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
+      } else {
+        yield put(walletActions.getBalances([tokenX, tokenY]))
+      }
+    } catch (e) {
+      console.log(e)
+      closeSnackbar(loaderWithdrawTokens)
+      yield put(snackbarsActions.remove(loaderWithdrawTokens))
+
+      yield put(
+        snackbarsActions.add({
+          message: 'Error during withdrawal tokens',
+          variant: 'error',
+          persist: false
+        })
+      )
+    }
+
+    if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
+      yield put(walletActions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
+    } else {
+      yield put(walletActions.getBalances([tokenX, tokenY]))
+    }
+
+    closeSnackbar(loaderWithdrawTokens)
+    yield put(snackbarsActions.remove(loaderWithdrawTokens))
   }
 }
 
@@ -448,13 +509,24 @@ export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
     const invariant = yield* getInvariant()
 
     api.setSigner(adapter.signer as any)
-
+    const txs = []
     const claimTx = yield* call(
       [invariant, invariant.claimFeeTx],
       index,
       INVARIANT_ACTION_GAS_AMOUNT
     )
+    txs.push(claimTx)
+    const withdrawTxs = yield* call(
+      withdrawTokenPairTx,
+      addressTokenX,
+      addressTokenY,
+      invariant,
+      walletAddress
+    )
 
+    if (withdrawTxs?.length) {
+      txs.push(...withdrawTxs)
+    }
     yield put(
       snackbarsActions.add({
         message: 'Signing transaction...',
@@ -465,7 +537,7 @@ export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
     )
 
     try {
-      yield* call(batchTxs, api, walletAddress, [claimTx])
+      yield* call(batchTxs, api, walletAddress, txs)
     } catch (e: any) {
       console.log(e)
 
@@ -486,7 +558,13 @@ export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
 
-    yield* call(withdrawTokensPair, addressTokenX, addressTokenY, invariant, api, walletAddress)
+    if (addressTokenX === VARA_ADDRESS || addressTokenY === VARA_ADDRESS) {
+      yield put(
+        walletActions.getBalances([addressTokenX === VARA_ADDRESS ? addressTokenY : addressTokenX])
+      )
+    } else {
+      yield put(walletActions.getBalances([addressTokenX, addressTokenY]))
+    }
 
     closeSnackbar(loaderSigningTx)
     yield put(snackbarsActions.remove(loaderSigningTx))
@@ -604,12 +682,26 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
 
     const fetchTask = yield* fork(handleGetPositionsListPage, getPositionsListPagePayload)
     yield* join(fetchTask)
+    const txs = []
 
     const removePositionTx = yield* call(
       [invariant, invariant.removePositionTx],
       positionIndex,
       INVARIANT_ACTION_GAS_AMOUNT
     )
+    txs.push(removePositionTx)
+
+    const withdrawTxs = yield* call(
+      withdrawTokenPairTx,
+      addressTokenX,
+      addressTokenY,
+      invariant,
+      walletAddress
+    )
+
+    if (withdrawTxs?.length) {
+      txs.push(...withdrawTxs)
+    }
 
     yield put(
       snackbarsActions.add({
@@ -621,14 +713,21 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
     )
 
     try {
-      yield* call(batchTxs, api, walletAddress, [removePositionTx])
+      yield* call(batchTxs, api, walletAddress, txs)
     } catch (e: any) {
       if (e.failedTxs) {
         console.log(e.failedTxs)
       }
       throw new Error(ErrorMessage.TRANSACTION_SIGNING_ERROR)
     }
-    yield* call(withdrawTokensPair, addressTokenX, addressTokenY, invariant, api, walletAddress)
+
+    if (addressTokenX === VARA_ADDRESS || addressTokenY === VARA_ADDRESS) {
+      yield put(
+        walletActions.getBalances([addressTokenX === VARA_ADDRESS ? addressTokenY : addressTokenX])
+      )
+    } else {
+      yield put(walletActions.getBalances([addressTokenX, addressTokenY]))
+    }
 
     closeSnackbar(loaderSigningTx)
     yield put(snackbarsActions.remove(loaderSigningTx))
