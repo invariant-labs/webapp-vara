@@ -10,9 +10,12 @@ import {
 } from '@invariant-labs/vara-sdk'
 import { PayloadAction } from '@reduxjs/toolkit'
 import {
+  APPROVE_TOKEN_GAS_AMOUNT,
+  DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT,
   DEPOSIT_VARA_SAFE_GAS_AMOUNT,
   ErrorMessage,
-  POOL_SAFE_TRANSACTION_FEE,
+  EXTRA_BALANCE_TO_DEPOSIT_VARA,
+  INVARIANT_ACTION_GAS_AMOUNT,
   U128MAX
 } from '@store/consts/static'
 import { actions, Simulate, Swap } from '@store/reducers/swap'
@@ -91,7 +94,9 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       const varaBalance = yield* select(balance)
 
       const varaAmountInWithSlippage =
-        varaBalance - POOL_SAFE_TRANSACTION_FEE > calculatedAmountIn ? calculatedAmountIn : amountIn
+        varaBalance - EXTRA_BALANCE_TO_DEPOSIT_VARA > calculatedAmountIn
+          ? calculatedAmountIn
+          : amountIn
 
       calculatedAmountIn = varaAmountInWithSlippage
 
@@ -112,7 +117,8 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       const depositTx = yield* call(
         [invariant, invariant.depositSingleTokenTx],
         tokenFrom as ActorId,
-        calculatedAmountIn
+        calculatedAmountIn,
+        DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
       )
 
       txs.push(depositTx)
@@ -123,7 +129,8 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
         [grc20, grc20.approveTx],
         invAddress,
         calculatedAmountIn,
-        tokenFrom
+        tokenFrom,
+        APPROVE_TOKEN_GAS_AMOUNT
       )
 
       txs.unshift(approveTx)
@@ -167,7 +174,8 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       byAmountIn ? amountIn : amountOut,
       byAmountIn,
       estimatedPriceAfterSwap,
-      slippage
+      slippage,
+      INVARIANT_ACTION_GAS_AMOUNT
     )
 
     try {

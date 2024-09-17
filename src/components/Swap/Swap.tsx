@@ -9,7 +9,12 @@ import { Box, Button, Grid, Typography } from '@mui/material'
 import refreshIcon from '@static/svg/refresh.svg'
 import settingIcon from '@static/svg/settings.svg'
 import SwapArrows from '@static/svg/swap-arrows.svg'
-import { DEFAULT_TOKEN_DECIMAL, REFRESHER_INTERVAL } from '@store/consts/static'
+import {
+  DEFAULT_TOKEN_DECIMAL,
+  EXTRA_BALANCE_TO_DEPOSIT_VARA,
+  REFRESHER_INTERVAL,
+  SWAP_SAFE_TRANSACTION_FEE
+} from '@store/consts/static'
 import {
   addressToTicker,
   convertBalanceToBigint,
@@ -95,6 +100,7 @@ export interface ISwap {
   simulateResult: SimulateResult
   simulateSwap: (simulate: Simulate) => void
   copyTokenAddressHandler: (message: string, variant: VariantType) => void
+  varaBalance: bigint
 }
 
 export const Swap: React.FC<ISwap> = ({
@@ -126,7 +132,8 @@ export const Swap: React.FC<ISwap> = ({
   swapData,
   simulateResult,
   simulateSwap,
-  copyTokenAddressHandler
+  copyTokenAddressHandler,
+  varaBalance
 }) => {
   const { classes } = useStyles()
   enum inputTarget {
@@ -335,6 +342,10 @@ export const Swap: React.FC<ISwap> = ({
       tokens[tokenFrom].balance
     ) {
       return 'Insufficient balance'
+    }
+
+    if (varaBalance < EXTRA_BALANCE_TO_DEPOSIT_VARA || varaBalance < SWAP_SAFE_TRANSACTION_FEE) {
+      return `Insufficient VARA`
     }
 
     if (

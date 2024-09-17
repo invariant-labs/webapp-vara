@@ -3,7 +3,11 @@ import DepositAmountInput from '@components/Inputs/DepositAmountInput/DepositAmo
 import Select from '@components/Inputs/Select/Select'
 import { Grid, Typography } from '@mui/material'
 import SwapList from '@static/svg/swap-list.svg'
-import { ALL_FEE_TIERS_DATA } from '@store/consts/static'
+import {
+  ALL_FEE_TIERS_DATA,
+  EXTRA_BALANCE_TO_DEPOSIT_VARA,
+  POOL_SAFE_TRANSACTION_FEE
+} from '@store/consts/static'
 import {
   convertBalanceToBigint,
   getScaleFromString,
@@ -63,6 +67,7 @@ export interface IDepositSelector {
   isBalanceLoading: boolean
   isGetLiquidityError: boolean
   ticksLoading: boolean
+  varaBalance: bigint
 }
 
 export const DepositSelector: React.FC<IDepositSelector> = ({
@@ -95,7 +100,8 @@ export const DepositSelector: React.FC<IDepositSelector> = ({
   positionOpeningMethod,
   isBalanceLoading,
   isGetLiquidityError,
-  ticksLoading
+  ticksLoading,
+  varaBalance
 }) => {
   const { classes } = useStyles()
 
@@ -164,6 +170,10 @@ export const DepositSelector: React.FC<IDepositSelector> = ({
         tokens[tokenB].balance
     ) {
       return `Not enough ${tokens[tokenB].symbol}`
+    }
+
+    if (varaBalance < EXTRA_BALANCE_TO_DEPOSIT_VARA || varaBalance < POOL_SAFE_TRANSACTION_FEE) {
+      return `Insufficient VARA`
     }
 
     if (

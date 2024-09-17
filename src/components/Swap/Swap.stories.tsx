@@ -65,7 +65,8 @@ export const Primary: Story = {
       errors: []
     },
     simulateSwap: fn(),
-    copyTokenAddressHandler: fn()
+    copyTokenAddressHandler: fn(),
+    varaBalance: 110832233990088 as any
   },
   render: args => {
     return (

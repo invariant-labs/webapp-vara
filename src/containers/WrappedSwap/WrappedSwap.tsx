@@ -20,7 +20,7 @@ import {
   tickMaps
 } from '@store/selectors/pools'
 import { simulateResult, swap as swapPool } from '@store/selectors/swap'
-import { balanceLoading, hexAddress, status, swapTokens } from '@store/selectors/wallet'
+import { balance, balanceLoading, hexAddress, status, swapTokens } from '@store/selectors/wallet'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -44,6 +44,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const allPools = useSelector(poolsArraySortedByFees)
   const tokensDict = useSelector(swapTokens)
   const isBalanceLoading = useSelector(balanceLoading)
+  const varaBalance = useSelector(balance)
   const { success, inProgress } = useSelector(swapPool)
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const network = useSelector(networkType)
@@ -99,7 +100,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   const addTokenHandler = async (address: HexString) => {
     const grc20 = await grc20Singleton.getInstance()
     const api = await apiSingleton.loadInstance(network)
-    if (grc20 && api !== null && !tokensDict[walletAddress]) {
+    if (grc20 && api !== null && !tokensDict[address]) {
       getNewTokenOrThrow(address, grc20, walletAddress)
         .then(data => {
           dispatch(poolsActions.addTokens(data))
@@ -341,6 +342,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       simulateResult={swapSimulateResult}
       simulateSwap={simulateSwap}
       copyTokenAddressHandler={copyTokenAddressHandler}
+      varaBalance={varaBalance}
     />
   )
 }

@@ -103,7 +103,8 @@ export const Primary: Story = {
     priceB: 2222,
     isBalanceLoading: false,
     isGetLiquidityError: false,
-    ticksLoading: false
+    ticksLoading: false,
+    varaBalance: 110832233990088 as any
   },
   render: args => <PrimaryComponent {...args} />
 }
