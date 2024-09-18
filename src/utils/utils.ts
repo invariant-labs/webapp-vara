@@ -58,6 +58,7 @@ import {
   BestTier,
   CoinGeckoAPIData,
   FormatNumberThreshold,
+  FullSnap,
   PrefixConfig,
   Token,
   TokenPriceData
@@ -1171,4 +1172,10 @@ export const findClosestIndexByValue = (arr: number[], value: number): number =>
     }
   }
   return high
+}
+
+export const getFullSnap = async (name: string): Promise<FullSnap> => {
+  const { data } = await axios.get<FullSnap>(`https://stats.invariant.app/vara/full_snap/${name}`)
+
+  return data
 }
