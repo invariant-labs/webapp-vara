@@ -240,16 +240,9 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
 
     txs2.push(tx)
 
-    const withdrawTxs = yield* call(
-      withdrawTokenPairTx,
-      tokenX,
-      tokenY,
-      invariant,
-      hexWalletAddress
-    )
-    if (withdrawTxs?.length) {
-      txs2.push(...withdrawTxs)
-    }
+    const withdrawTxs = yield* call(withdrawTokenPairTx, tokenX, tokenY, invariant)
+
+    txs2.push(...withdrawTxs)
 
     try {
       yield* call(batchTxs, api, hexWalletAddress, txs2)
@@ -330,16 +323,8 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
       )
     }
 
-    const withdrawTxs = yield* call(
-      withdrawTokenPairTx,
-      tokenX,
-      tokenY,
-      invariant,
-      hexWalletAddress
-    )
-    if (!withdrawTxs) {
-      return
-    }
+    const withdrawTxs = yield* call(withdrawTokenPairTx, tokenX, tokenY, invariant)
+
     const loaderWithdrawTokens = createLoaderKey()
 
     yield put(
@@ -518,6 +503,9 @@ export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
     )
     txs.push(claimTx)
 
+    const withdrawTxs = yield* call(withdrawTokenPairTx, addressTokenX, addressTokenY, invariant)
+
+    txs.push(...withdrawTxs)
     yield put(
       snackbarsActions.add({
         message: 'Signing transaction...',
@@ -529,18 +517,6 @@ export function* handleClaimFee(action: PayloadAction<HandleClaimFee>) {
 
     try {
       yield* call(batchTxs, api, walletAddress, txs)
-
-      const withdrawTxs = yield* call(
-        withdrawTokenPairTx,
-        addressTokenX,
-        addressTokenY,
-        invariant,
-        walletAddress
-      )
-
-      if (withdrawTxs?.length) {
-        yield* call(batchTxs, api, walletAddress, withdrawTxs)
-      }
     } catch (e: any) {
       console.log(e)
 
@@ -694,6 +670,10 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
     )
     txs.push(removePositionTx)
 
+    const withdrawTxs = yield* call(withdrawTokenPairTx, addressTokenX, addressTokenY, invariant)
+
+    txs.push(...withdrawTxs)
+
     yield put(
       snackbarsActions.add({
         message: 'Signing transaction...',
@@ -705,18 +685,6 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
 
     try {
       yield* call(batchTxs, api, walletAddress, txs)
-
-      const withdrawTxs = yield* call(
-        withdrawTokenPairTx,
-        addressTokenX,
-        addressTokenY,
-        invariant,
-        walletAddress
-      )
-
-      if (withdrawTxs?.length) {
-        yield* call(batchTxs, api, walletAddress, withdrawTxs)
-      }
     } catch (e: any) {
       if (e.failedTxs) {
         console.log(e.failedTxs)

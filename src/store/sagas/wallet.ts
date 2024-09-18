@@ -287,47 +287,27 @@ export function* handleReconnect(): Generator {
   yield* call(handleConnect, { type: actions.connect.type, payload: false })
 }
 
-export function* withdrawTokenPairTx(
-  tokenX: HexString,
-  tokenY: HexString,
-  invariant: Invariant,
-  walletAddress: HexString
-) {
-  const userBalances = yield* call([invariant, invariant.getUserBalances], walletAddress)
-
-  if (userBalances.size === 0) {
-    if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
-      yield* put(actions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
-    } else {
-      yield* put(actions.getBalances([tokenX, tokenY]))
-    }
-
-    return
-  }
-
+export function* withdrawTokenPairTx(tokenX: HexString, tokenY: HexString, invariant: Invariant) {
   const withdrawTxs = []
 
   if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
     const isTokenXVara = tokenX === VARA_ADDRESS
-    if (userBalances.has(VARA_ADDRESS)) {
-      const withdrawVaraTx = yield* call(
-        [invariant, invariant.withdrawVaraTx],
-        null,
-        DEPOSIT_VARA_SAFE_GAS_AMOUNT
-      )
-      withdrawTxs.push(withdrawVaraTx)
-    }
 
-    if (userBalances.has(isTokenXVara ? tokenY : tokenX)) {
-      const withdrawSecondTokenTx = yield* call(
-        [invariant, invariant.withdrawSingleTokenTx],
-        isTokenXVara ? tokenY : tokenX,
-        null,
-        DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
-      )
+    const withdrawVaraTx = yield* call(
+      [invariant, invariant.withdrawVaraTx],
+      null,
+      DEPOSIT_VARA_SAFE_GAS_AMOUNT
+    )
+    withdrawTxs.push(withdrawVaraTx)
 
-      withdrawTxs.push(withdrawSecondTokenTx)
-    }
+    const withdrawSecondTokenTx = yield* call(
+      [invariant, invariant.withdrawSingleTokenTx],
+      isTokenXVara ? tokenY : tokenX,
+      null,
+      DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
+    )
+
+    withdrawTxs.push(withdrawSecondTokenTx)
   } else {
     const withdrawTx = yield* call(
       [invariant, invariant.withdrawTokenPairTx],

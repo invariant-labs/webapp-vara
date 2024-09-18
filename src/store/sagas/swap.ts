@@ -179,20 +179,12 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     )
     txs2.push(swapTx)
 
+    const withdrawTxs = yield* call(withdrawTokenPairTx, tokenFrom, tokenTo, invariant)
+
+    txs2.push(...withdrawTxs)
+
     try {
       yield* call(batchTxs, api, walletAddress, txs2)
-
-      const withdrawTxs = yield* call(
-        withdrawTokenPairTx,
-        tokenFrom,
-        tokenTo,
-        invariant,
-        walletAddress
-      )
-
-      if (withdrawTxs?.length) {
-        yield* call(batchTxs, api, walletAddress, withdrawTxs)
-      }
     } catch (e: any) {
       console.log(e)
 
