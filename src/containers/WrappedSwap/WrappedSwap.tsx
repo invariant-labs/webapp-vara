@@ -4,6 +4,7 @@ import { commonTokensForNetworks, DEFAULT_SWAP_SLIPPAGE } from '@store/consts/st
 import { TokenPriceData } from '@store/consts/types'
 import {
   addNewTokenToLocalStorage,
+  calcAdditionalSwapGas,
   getCoinGeckoTokenPrice,
   getMockedTokenPrice,
   getNewTokenOrThrow,
@@ -273,6 +274,16 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
         byAmountIn
       ) => {
         setProgress('progress')
+        const pool = allPools.find(pool => pool.poolKey === poolKey)
+
+        const tickSpacing = poolKey.feeTier.tickSpacing
+
+        const swapAdditionalGas = calcAdditionalSwapGas(
+          estimatedPriceAfterSwap,
+          pool?.sqrtPrice || 0n,
+          tickSpacing
+        )
+
         dispatch(
           actions.swap({
             poolKey,
@@ -282,7 +293,8 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
             tokenTo,
             amountIn,
             amountOut,
-            byAmountIn
+            byAmountIn,
+            swapAdditionalGas
           })
         )
       }}

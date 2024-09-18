@@ -14,6 +14,7 @@ export interface Swap {
   inProgress?: boolean
   success?: boolean
   amountOut: bigint
+  swapAdditionalGas: bigint
 }
 
 export interface Simulate {
@@ -37,7 +38,8 @@ export const defaultState: ISwapStore = {
     tokenTo: '0x',
     amountIn: 0n,
     byAmountIn: false,
-    amountOut: 0n
+    amountOut: 0n,
+    swapAdditionalGas: 0n
   },
   simulateResult: {
     poolKey: null,

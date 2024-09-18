@@ -50,7 +50,8 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     amountOut,
     byAmountIn,
     estimatedPriceAfterSwap,
-    tokenTo
+    tokenTo,
+    swapAdditionalGas
   } = action.payload
 
   if (!poolKey) {
@@ -175,7 +176,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       byAmountIn,
       estimatedPriceAfterSwap,
       slippage,
-      SWAP_GAS_AMOUNT
+      SWAP_GAS_AMOUNT + swapAdditionalGas
     )
     txs2.push(swapTx)
 
