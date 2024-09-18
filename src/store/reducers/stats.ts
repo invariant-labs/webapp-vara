@@ -15,7 +15,7 @@ export interface Value24H {
 export interface TokenStatsData {
   address: HexString
   price: number
-  priceChange: number
+  // priceChange: number
   volume24: number
   tvl: number
 }
