@@ -90,7 +90,7 @@ export const VARA: Token = {
   decimals: 12n,
   name: 'Vara',
   logoURI: 'https://assets.coingecko.com/coins/images/31458/standard/vara.jpeg?1696530272',
-  coingeckoId: 'vara'
+  coingeckoId: 'vara-network'
 }
 
 export const DEFAULT_TOKENS = [BTC, ETH, USDC, VARA]
