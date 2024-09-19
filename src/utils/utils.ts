@@ -16,8 +16,6 @@ import {
 } from '@invariant-labs/vara-sdk'
 import {
   CHUNK_SIZE,
-  INVARIANT_GAS_LIMIT,
-  MAX_TICK_CROSS,
   PERCENTAGE_DENOMINATOR,
   PERCENTAGE_SCALE,
   PRICE_SCALE,
@@ -29,7 +27,6 @@ import {
 import {
   ActorId,
   calculateLiquidityBreakpoints,
-  calculateTick,
   HexString,
   priceToSqrtPrice
 } from '@invariant-labs/vara-sdk/target/utils'
@@ -1181,19 +1178,4 @@ export const getFullSnap = async (name: string): Promise<FullSnap> => {
   const { data } = await axios.get<FullSnap>(`https://stats.invariant.app/vara/full_snap/${name}`)
 
   return data
-}
-
-export const calcAdditionalSwapGas = (
-  targetSqrtPrice: bigint,
-  poolSqrtPrice: bigint,
-  tickSpacing: bigint
-) => {
-  const startTick = calculateTick(targetSqrtPrice, tickSpacing)
-  const endTick = calculateTick(poolSqrtPrice, tickSpacing)
-
-  const swapAdditionalGas =
-    (BigInt(Math.abs(Number(startTick) - Number(endTick))) * INVARIANT_GAS_LIMIT) /
-    (tickSpacing * MAX_TICK_CROSS)
-
-  return swapAdditionalGas
 }

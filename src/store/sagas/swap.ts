@@ -15,8 +15,8 @@ import {
   DEPOSIT_VARA_SAFE_GAS_AMOUNT,
   ErrorMessage,
   EXTRA_BALANCE_TO_DEPOSIT_VARA,
-  SWAP_GAS_AMOUNT,
-  U128MAX
+  U128MAX,
+  SWAP_GAS_AMOUNT
 } from '@store/consts/static'
 import { actions as walletActions } from '@store/reducers/wallet'
 import { actions, Simulate, Swap } from '@store/reducers/swap'
@@ -50,8 +50,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
     amountOut,
     byAmountIn,
     estimatedPriceAfterSwap,
-    tokenTo,
-    swapAdditionalGas
+    tokenTo
   } = action.payload
 
   if (!poolKey) {
@@ -176,7 +175,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
       byAmountIn,
       estimatedPriceAfterSwap,
       slippage,
-      SWAP_GAS_AMOUNT + swapAdditionalGas
+      SWAP_GAS_AMOUNT
     )
     txs2.push(swapTx)
 
