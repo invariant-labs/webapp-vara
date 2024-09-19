@@ -20,7 +20,7 @@ import { positionsList } from '@store/selectors/positions'
 import { getApi, getGRC20 } from './connection'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { createLoaderKey, getTokenBalances } from '@utils/utils'
-import { GearApi, GearKeyring, HexString } from '@gear-js/api'
+import { GearKeyring, HexString } from '@gear-js/api'
 import {
   DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT,
   DEPOSIT_OR_WITHDRAW_TOKEN_PAIR_GAS_AMOUNT,
@@ -287,50 +287,27 @@ export function* handleReconnect(): Generator {
   yield* call(handleConnect, { type: actions.connect.type, payload: false })
 }
 
-export function* withdrawTokensPair(
-  tokenX: HexString,
-  tokenY: HexString,
-  invariant: Invariant,
-  api: GearApi,
-  walletAddress: HexString,
-  isError?: boolean
-) {
-  const userBalances = yield* call([invariant, invariant.getUserBalances], walletAddress)
-
-  if (userBalances.size === 0) {
-    if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
-      yield put(actions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
-    } else {
-      yield put(actions.getBalances([tokenX, tokenY]))
-    }
-
-    return
-  }
-  const loaderWithdrawTokens = createLoaderKey()
-
-  const txs = []
+export function* withdrawTokenPairTx(tokenX: HexString, tokenY: HexString, invariant: Invariant) {
+  const withdrawTxs = []
 
   if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
     const isTokenXVara = tokenX === VARA_ADDRESS
-    if (userBalances.has(VARA_ADDRESS)) {
-      const withdrawVaraTx = yield* call(
-        [invariant, invariant.withdrawVaraTx],
-        null,
-        DEPOSIT_VARA_SAFE_GAS_AMOUNT
-      )
-      txs.push(withdrawVaraTx)
-    }
 
-    if (userBalances.has(isTokenXVara ? tokenY : tokenX)) {
-      const withdrawSecondTokenTx = yield* call(
-        [invariant, invariant.withdrawSingleTokenTx],
-        isTokenXVara ? tokenY : tokenX,
-        null,
-        DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
-      )
+    const withdrawVaraTx = yield* call(
+      [invariant, invariant.withdrawVaraTx],
+      null,
+      DEPOSIT_VARA_SAFE_GAS_AMOUNT
+    )
+    withdrawTxs.push(withdrawVaraTx)
 
-      txs.push(withdrawSecondTokenTx)
-    }
+    const withdrawSecondTokenTx = yield* call(
+      [invariant, invariant.withdrawSingleTokenTx],
+      isTokenXVara ? tokenY : tokenX,
+      null,
+      DEPOSIT_OR_WITHDRAW_SINGLE_TOKEN_GAS_AMOUNT
+    )
+
+    withdrawTxs.push(withdrawSecondTokenTx)
   } else {
     const withdrawTx = yield* call(
       [invariant, invariant.withdrawTokenPairTx],
@@ -338,42 +315,11 @@ export function* withdrawTokensPair(
       [tokenY, null] as [ActorId, bigint | null],
       DEPOSIT_OR_WITHDRAW_TOKEN_PAIR_GAS_AMOUNT
     )
-    txs.push(withdrawTx)
+
+    withdrawTxs.push(withdrawTx)
   }
 
-  yield put(
-    snackbarsActions.add({
-      message: isError ? 'Withdrawing tokens from transaction...' : 'Withdrawing tokens...',
-      variant: 'pending',
-      persist: true,
-      key: loaderWithdrawTokens
-    })
-  )
-
-  try {
-    yield* call(batchTxs, api, walletAddress, txs)
-
-    if (tokenX === VARA_ADDRESS || tokenY === VARA_ADDRESS) {
-      yield put(actions.getBalances([tokenX === VARA_ADDRESS ? tokenY : tokenX]))
-    } else {
-      yield put(actions.getBalances([tokenX, tokenY]))
-    }
-  } catch (e) {
-    console.log(e)
-    closeSnackbar(loaderWithdrawTokens)
-    yield put(snackbarsActions.remove(loaderWithdrawTokens))
-
-    yield put(
-      snackbarsActions.add({
-        message: 'Error during withdrawal tokens',
-        variant: 'error',
-        persist: false
-      })
-    )
-  }
-
-  closeSnackbar(loaderWithdrawTokens)
-  yield put(snackbarsActions.remove(loaderWithdrawTokens))
+  return withdrawTxs
 }
 export function* handleGetBalances(action: PayloadAction<HexString[]>): Generator {
   yield* call(fetchBalances, action.payload)

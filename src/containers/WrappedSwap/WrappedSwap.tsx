@@ -273,6 +273,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
         byAmountIn
       ) => {
         setProgress('progress')
+
         dispatch(
           actions.swap({
             poolKey,
