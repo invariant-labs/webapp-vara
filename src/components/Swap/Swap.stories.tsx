@@ -51,8 +51,7 @@ export const Primary: Story = {
       amountIn: 123 as any,
       byAmountIn: false,
       amountOut: 1114 as any,
-      poolKey: null,
-      swapAdditionalGas: 0 as any
+      poolKey: null
     },
     tickmap: {},
     tokens: {},
@@ -81,8 +80,7 @@ export const Primary: Story = {
           amountIn: 123 as any,
           byAmountIn: false,
           amountOut: 1114 as any,
-          poolKey: null,
-          swapAdditionalGas: 0 as any
+          poolKey: null
         }}
         simulateResult={{
           poolKey: null,
