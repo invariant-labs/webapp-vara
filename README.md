@@ -3,7 +3,7 @@
     <p>
         | <a href="https://docs.invariant.app/docs/vara">DOCS 📚</a> |
         <a href="https://invariant.app/math-spec-vara.pdf">MATH SPEC 📄</a> |
-        <a href="https://discord.gg/P5dheFSg">DISCORD 🌐</a> |
+        <a href="https://discord.gg/HSBPEc8m">DISCORD 🌐</a> |
     </p>
 </div>
 
