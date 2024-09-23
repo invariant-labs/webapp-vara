@@ -46,7 +46,7 @@ import { VariantType } from 'notistack'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import apiSingleton from '@store/services/apiSingleton'
-import grc20Singleton from '@store/services/grc20Singleton'
+import vftSingleton from '@store/services/vftSingleton'
 
 export interface IProps {
   initialTokenFrom: string
@@ -300,10 +300,10 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   }, [poolKey])
 
   const addTokenHandler = async (address: HexString) => {
-    const grc20 = await grc20Singleton.getInstance()
+    const VFT = await vftSingleton.getInstance()
     const api = await apiSingleton.loadInstance(network)
-    if (grc20 && api !== null && !tokens[address]) {
-      getNewTokenOrThrow(address, grc20, walletAddress)
+    if (VFT && api !== null && !tokens[address]) {
+      getNewTokenOrThrow(address, VFT, walletAddress)
         .then(data => {
           dispatch(poolsActions.addTokens(data))
           dispatch(walletActions.getBalances(Object.keys(data) as HexString[]))

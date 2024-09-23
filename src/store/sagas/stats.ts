@@ -5,14 +5,14 @@ import { tokens } from '@store/selectors/pools'
 import { address } from '@store/selectors/wallet'
 import { getFullSnap, getTokenDataByAddresses } from '@utils/utils'
 import { call, put, select, takeEvery } from 'typed-redux-saga'
-import { getGRC20 } from './connection'
+import { getVFT } from './connection'
 import { HexString } from '@gear-js/api'
 
 export function* getStats(): Generator {
   try {
     const currentNetwork = yield* select(networkType)
     const walletAddress = yield* select(address)
-    const grc20 = yield* getGRC20()
+    const VFT = yield* getVFT()
 
     const fullSnap = yield* call(getFullSnap, currentNetwork.toLowerCase())
 
@@ -35,7 +35,7 @@ export function* getStats(): Generator {
     const unknownTokensData = yield* call(
       getTokenDataByAddresses,
       [...unknownTokens],
-      grc20,
+      VFT,
       walletAddress as HexString
     )
     yield* put(poolsActions.addTokens(unknownTokensData))

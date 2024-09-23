@@ -27,7 +27,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { VariantType } from 'notistack'
 import { HexString } from '@gear-js/api'
 import apiSingleton from '@store/services/apiSingleton'
-import grc20Singleton from '@store/services/grc20Singleton'
+import vftSingleton from '@store/services/vftSingleton'
 
 type Props = {
   initialTokenFrom: string
@@ -98,10 +98,10 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       : localStorage.getItem(`INVARIANT_LAST_TOKEN_TO_${network}`)
 
   const addTokenHandler = async (address: HexString) => {
-    const grc20 = await grc20Singleton.getInstance()
+    const VFT = await vftSingleton.getInstance()
     const api = await apiSingleton.loadInstance(network)
-    if (grc20 && api !== null && !tokensDict[address]) {
-      getNewTokenOrThrow(address, grc20, walletAddress)
+    if (VFT && api !== null && !tokensDict[address]) {
+      getNewTokenOrThrow(address, VFT, walletAddress)
         .then(data => {
           dispatch(poolsActions.addTokens(data))
           dispatch(walletActions.getBalances(Object.keys(data) as HexString[]))

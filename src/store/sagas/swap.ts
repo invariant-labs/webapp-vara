@@ -37,7 +37,7 @@ import { all, call, put, select, spawn, takeEvery } from 'typed-redux-saga'
 import { balance, hexAddress, tokensBalances } from '@store/selectors/wallet'
 import { getWallet, withdrawTokenPairTx } from './wallet'
 import { invariantAddress } from '@store/selectors/connection'
-import { getApi, getGRC20, getInvariant } from './connection'
+import { getApi, getVFT, getInvariant } from './connection'
 import { closeSnackbar } from 'notistack'
 import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 
@@ -66,7 +66,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
 
   const api = yield* getApi()
   const invariant = yield* getInvariant()
-  const grc20 = yield* getGRC20()
+  const VFT = yield* getVFT()
 
   try {
     yield put(
@@ -127,7 +127,7 @@ export function* handleSwap(action: PayloadAction<Omit<Swap, 'txid'>>): Generato
 
     if (tokenFrom !== VARA_ADDRESS) {
       const approveTx = yield* call(
-        [grc20, grc20.approveTx],
+        [VFT, VFT.approveTx],
         invAddress,
         calculatedAmountIn,
         tokenFrom,

@@ -17,7 +17,7 @@ import {
   takeLeading
 } from 'typed-redux-saga'
 import { positionsList } from '@store/selectors/positions'
-import { getApi, getGRC20 } from './connection'
+import { getApi, getVFT } from './connection'
 import { openWalletSelectorModal } from '@utils/web3/selector'
 import { createLoaderKey, getTokenBalances } from '@utils/utils'
 import { GearKeyring, HexString } from '@gear-js/api'
@@ -120,16 +120,16 @@ export function* handleAirdrop(): Generator {
 
     const api = yield* getApi()
 
-    const grc20 = yield* getGRC20()
+    const VFT = yield* getVFT()
 
-    grc20.setAdmin(deployerAccount)
+    VFT.setAdmin(deployerAccount)
     const txs = []
 
     for (const ticker in FaucetTokenList) {
       const address = FaucetTokenList[ticker as keyof typeof FaucetTokenList]
       const airdropAmount = TokenAirdropAmount[ticker as keyof typeof FaucetTokenList]
 
-      const mintTx = yield* call([grc20, grc20.mintTx], walletAddress, airdropAmount, address)
+      const mintTx = yield* call([VFT, VFT.mintTx], walletAddress, airdropAmount, address)
       txs.push(mintTx)
     }
 
@@ -252,7 +252,7 @@ export function* fetchBalances(tokens: HexString[]): Generator {
   try {
     const stringAddress = yield* select(address)
     const walletAddress = yield* select(hexAddress)
-    const grc20 = yield* getGRC20()
+    const VFT = yield* getVFT()
     const tokensWithoutVara = tokens.filter(token => token !== VARA_ADDRESS)
 
     yield* put(actions.setIsBalanceLoading(true))
@@ -260,7 +260,7 @@ export function* fetchBalances(tokens: HexString[]): Generator {
     const balance = yield* call(getBalance, stringAddress)
     yield* put(actions.setBalance(BigInt(balance)))
 
-    const tokenBalances = yield* call(getTokenBalances, tokensWithoutVara, grc20, walletAddress)
+    const tokenBalances = yield* call(getTokenBalances, tokensWithoutVara, VFT, walletAddress)
 
     if (tokenBalances.length !== 0) {
       yield* put(

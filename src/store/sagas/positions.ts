@@ -23,7 +23,7 @@ import { poolsArraySortedByFees, tickMaps, tokens } from '@store/selectors/pools
 import { all, call, fork, join, put, select, spawn, takeEvery, takeLatest } from 'typed-redux-saga'
 import { fetchTicksAndTickMaps, fetchTokens } from './pools'
 import { positionsList } from '@store/selectors/positions'
-import { getApi, getGRC20, getInvariant } from './connection'
+import { getApi, getVFT, getInvariant } from './connection'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { invariantAddress } from '@store/selectors/connection'
 import { balance, hexAddress, tokensBalances } from '@store/selectors/wallet'
@@ -69,7 +69,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
   const maxTokenBalances = yield* select(tokensBalances)
   const invAddress = yield* select(invariantAddress)
   const varaBalance = yield* select(balance)
-  const grc20 = yield* getGRC20()
+  const VFT = yield* getVFT()
   const api = yield* getApi()
   const invariant = yield* getInvariant()
 
@@ -163,7 +163,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
 
     if (tokenX !== VARA_ADDRESS) {
       const XTokenApproveTx = yield* call(
-        [grc20, grc20.approveTx],
+        [VFT, VFT.approveTx],
         invAddress,
         xAmountWithSlippage,
         tokenX,
@@ -175,7 +175,7 @@ function* handleInitPosition(action: PayloadAction<InitPositionData>): Generator
 
     if (tokenY !== VARA_ADDRESS) {
       const YTokenApproveTx = yield* call(
-        [grc20, grc20.approveTx],
+        [VFT, VFT.approveTx],
         invAddress,
         yAmountWithSlippage,
         tokenY,
