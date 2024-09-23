@@ -9,7 +9,7 @@ import {
 } from '@store/reducers/pools'
 import { all, call, put, select, spawn, takeEvery, takeLatest } from 'typed-redux-saga'
 import { MAX_POOL_KEYS_RETURNED } from '@invariant-labs/vara-sdk/target/consts'
-import { getVFT, getInvariant } from './connection'
+import { getVft, getInvariant } from './connection'
 import { hexAddress } from '@store/selectors/wallet'
 import {
   findPairs,
@@ -23,7 +23,7 @@ export function* fetchPoolsDataForList(action: PayloadAction<ListPoolsRequest>) 
   const walletAddress = yield* select(hexAddress)
   const invariant = yield* getInvariant()
   const pools = yield* call(getPoolsByPoolKeys, invariant, action.payload.poolKeys)
-  const VFT = yield* getVFT()
+  const vft = yield* getVft()
   const allTokens = yield* select(tokens)
   const unknownTokens = new Set(
     action.payload.poolKeys.flatMap(({ tokenX, tokenY }) =>
@@ -39,10 +39,10 @@ export function* fetchPoolsDataForList(action: PayloadAction<ListPoolsRequest>) 
   const unknownTokensData = yield* call(
     getTokenDataByAddresses,
     [...unknownTokens],
-    VFT,
+    vft,
     walletAddress
   )
-  const knownTokenBalances = yield* call(getTokenBalances, [...knownTokens], VFT, walletAddress)
+  const knownTokenBalances = yield* call(getTokenBalances, [...knownTokens], vft, walletAddress)
 
   yield* put(actions.addTokens(unknownTokensData))
   yield* put(actions.updateTokenBalances(knownTokenBalances))

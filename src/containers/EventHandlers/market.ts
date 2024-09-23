@@ -25,7 +25,7 @@ const MarketEvents = () => {
   useEffect(() => {
     const connectEvents = async () => {
       const api = await apiSingleton.loadInstance(network)
-      const VFT = await vftSingleton.loadInstance(api)
+      const vft = await vftSingleton.loadInstance(api)
       let tokens = getNetworkTokensList(network)
 
       const currentListStr = localStorage.getItem(`CUSTOM_TOKENS_${network}`)
@@ -35,7 +35,7 @@ const MarketEvents = () => {
               .filter((address: HexString) => !tokens[address])
               .map((address: HexString) => address)
           : []
-      getTokenDataByAddresses(currentList, VFT, walletAddress)
+      getTokenDataByAddresses(currentList, vft, walletAddress)
         .then(data => {
           tokens = {
             ...tokens,

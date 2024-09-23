@@ -358,15 +358,15 @@ export const parseFeeToPathFee = (fee: bigint): string => {
 
 export const getTokenDataByAddresses = async (
   tokens: HexString[],
-  VFT: FungibleToken,
+  vft: FungibleToken,
   walletAddress: HexString
 ): Promise<Record<HexString, Token>> => {
   const promises = tokens.flatMap(token => {
     return [
-      VFT.symbol(token),
-      VFT.name(token),
-      VFT.decimals(token),
-      VFT.balanceOf(walletAddress, token)
+      vft.symbol(token),
+      vft.name(token),
+      vft.decimals(token),
+      vft.balanceOf(walletAddress, token)
     ]
   })
   const results = await Promise.all(promises)
@@ -389,12 +389,12 @@ export const getTokenDataByAddresses = async (
 
 export const getTokenBalances = async (
   tokens: HexString[],
-  VFT: FungibleToken,
+  vft: FungibleToken,
   walletAddress: ActorId
 ): Promise<[HexString, bigint][]> => {
   const promises: Promise<bigint>[] = []
   tokens.map(tokenAddress => {
-    promises.push(VFT.balanceOf(walletAddress, tokenAddress))
+    promises.push(vft.balanceOf(walletAddress, tokenAddress))
   })
 
   const results = await Promise.all(promises)
@@ -952,10 +952,10 @@ export const isErrorMessage = (message: string): boolean => {
 
 export const getNewTokenOrThrow = async (
   address: HexString,
-  VFT: FungibleToken,
+  vft: FungibleToken,
   walletAddress: HexString
 ): Promise<Record<HexString, Token>> => {
-  const tokenData = await getTokenDataByAddresses([address], VFT, walletAddress)
+  const tokenData = await getTokenDataByAddresses([address], vft, walletAddress)
 
   if (tokenData) {
     return tokenData

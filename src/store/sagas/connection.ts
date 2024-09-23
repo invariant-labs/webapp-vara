@@ -31,15 +31,15 @@ export function* getInvariant(): SagaGenerator<Invariant> {
   return invariant
 }
 
-export function* getVFT(): SagaGenerator<FungibleToken> {
-  let VFT = yield* call([vftSingleton, vftSingleton.getInstance])
+export function* getVft(): SagaGenerator<FungibleToken> {
+  let vft = yield* call([vftSingleton, vftSingleton.getInstance])
 
-  if (!VFT) {
+  if (!vft) {
     const api = yield* call(getApi)
-    VFT = yield* call([vftSingleton, vftSingleton.loadInstance], api)
+    vft = yield* call([vftSingleton, vftSingleton.loadInstance], api)
   }
 
-  return VFT
+  return vft
 }
 
 export function* initConnection(): Generator {

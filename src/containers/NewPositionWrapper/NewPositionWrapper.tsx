@@ -300,10 +300,10 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   }, [poolKey])
 
   const addTokenHandler = async (address: HexString) => {
-    const VFT = await vftSingleton.getInstance()
+    const vft = await vftSingleton.getInstance()
     const api = await apiSingleton.loadInstance(network)
-    if (VFT && api !== null && !tokens[address]) {
-      getNewTokenOrThrow(address, VFT, walletAddress)
+    if (vft && api !== null && !tokens[address]) {
+      getNewTokenOrThrow(address, vft, walletAddress)
         .then(data => {
           dispatch(poolsActions.addTokens(data))
           dispatch(walletActions.getBalances(Object.keys(data) as HexString[]))
