@@ -3,7 +3,7 @@ import { actions, Status, PayloadTypes } from '@store/reducers/connection'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { PayloadAction } from '@reduxjs/toolkit'
 import apiSingleton from '@store/services/apiSingleton'
-import grc20Singleton from '@store/services/grc20Singleton'
+import vftSingleton from '@store/services/vftSingleton'
 import invariantSingleton from '@store/services/invariantSingleton'
 import { FungibleToken, Invariant } from '@invariant-labs/vara-sdk'
 import { GearApi } from '@gear-js/api'
@@ -31,15 +31,15 @@ export function* getInvariant(): SagaGenerator<Invariant> {
   return invariant
 }
 
-export function* getGRC20(): SagaGenerator<FungibleToken> {
-  let GRC20 = yield* call([grc20Singleton, grc20Singleton.getInstance])
+export function* getVft(): SagaGenerator<FungibleToken> {
+  let vft = yield* call([vftSingleton, vftSingleton.getInstance])
 
-  if (!GRC20) {
+  if (!vft) {
     const api = yield* call(getApi)
-    GRC20 = yield* call([grc20Singleton, grc20Singleton.loadInstance], api)
+    vft = yield* call([vftSingleton, vftSingleton.loadInstance], api)
   }
 
-  return GRC20
+  return vft
 }
 
 export function* initConnection(): Generator {

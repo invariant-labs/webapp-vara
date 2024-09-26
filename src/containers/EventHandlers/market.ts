@@ -9,7 +9,7 @@ import invariantSingleton from '@store/services/invariantSingleton'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getNetworkTokensList, getTokenDataByAddresses } from '@utils/utils'
-import grc20Singleton from '@store/services/grc20Singleton'
+import vftSingleton from '@store/services/vftSingleton'
 import { HexString } from '@gear-js/api'
 
 const MarketEvents = () => {
@@ -25,7 +25,7 @@ const MarketEvents = () => {
   useEffect(() => {
     const connectEvents = async () => {
       const api = await apiSingleton.loadInstance(network)
-      const grc20 = await grc20Singleton.loadInstance(api)
+      const vft = await vftSingleton.loadInstance(api)
       let tokens = getNetworkTokensList(network)
 
       const currentListStr = localStorage.getItem(`CUSTOM_TOKENS_${network}`)
@@ -35,7 +35,7 @@ const MarketEvents = () => {
               .filter((address: HexString) => !tokens[address])
               .map((address: HexString) => address)
           : []
-      getTokenDataByAddresses(currentList, grc20, walletAddress)
+      getTokenDataByAddresses(currentList, vft, walletAddress)
         .then(data => {
           tokens = {
             ...tokens,
