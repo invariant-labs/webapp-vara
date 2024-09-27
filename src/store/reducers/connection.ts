@@ -1,7 +1,7 @@
 import { ActorId, Network } from '@invariant-labs/vara-sdk'
 import { TESTNET_INVARIANT_ADDRESS, VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
-import { RPC } from '@store/consts/static'
+import { INVARIANT_ADDRESS, RPC } from '@store/consts/static'
 import { PayloadType } from '@store/consts/types'
 
 export enum Status {
@@ -10,6 +10,19 @@ export enum Status {
   Error = 'error',
   Initialized = 'initalized'
 }
+
+export enum RpcStatus {
+  Uninitialized,
+  Error,
+  Ignored,
+  IgnoredWithError
+}
+
+const RPC_STATUS =
+  localStorage.getItem('IS_RPC_WARNING_IGNORED') === 'true'
+    ? RpcStatus.Ignored
+    : RpcStatus.Uninitialized
+
 export interface IVaraConnectionStore {
   status: Status
   message: string
@@ -18,6 +31,7 @@ export interface IVaraConnectionStore {
   rpcAddress: string
   invariantAddress: ActorId
   wrappedVARAAddress: string
+  rpcStatus: RpcStatus
 }
 
 export const defaultState: IVaraConnectionStore = {
@@ -27,7 +41,8 @@ export const defaultState: IVaraConnectionStore = {
   blockNumber: 0,
   rpcAddress: localStorage.getItem(`INVARIANT_RPC_VARA_${Network.Testnet}`) || RPC.TEST,
   invariantAddress: TESTNET_INVARIANT_ADDRESS,
-  wrappedVARAAddress: VARA_ADDRESS
+  wrappedVARAAddress: VARA_ADDRESS,
+  rpcStatus: RPC_STATUS
 }
 export const connectionSliceName = 'connection'
 const connectionSlice = createSlice({
@@ -46,16 +61,10 @@ const connectionSlice = createSlice({
       state.message = action.payload
       return state
     },
-    setNetwork(
-      state,
-      action: PayloadAction<{
-        networkType: Network
-        rpcAddress: string
-        rpcName?: string
-      }>
-    ) {
-      state.networkType = action.payload.networkType
-      state.rpcAddress = action.payload.rpcAddress
+    setNetwork(state, action: PayloadAction<Network>) {
+      state.networkType = action.payload
+      state.invariantAddress = INVARIANT_ADDRESS[action.payload]
+      state.wrappedVARAAddress = VARA_ADDRESS
       return state
     },
     updateSlot(state) {
@@ -63,6 +72,17 @@ const connectionSlice = createSlice({
     },
     setSlot(state, action: PayloadAction<number>) {
       state.blockNumber = action.payload
+      return state
+    },
+    setRPCAddress(state, action: PayloadAction<string>) {
+      state.rpcAddress = action.payload
+      return state
+    },
+    setRpcStatus(state, action: PayloadAction<RpcStatus>) {
+      state.rpcStatus = action.payload
+      return state
+    },
+    handleRpcError(state, _action: PayloadAction) {
       return state
     }
   }

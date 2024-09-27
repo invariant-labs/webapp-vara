@@ -6,8 +6,7 @@ export const useStyles = makeStyles()(theme => {
     wrapper: {
       borderRadius: 10,
       backgroundColor: colors.invariant.component,
-      padding: 24,
-      paddingTop: 16,
+      padding: '16px 24px 16px 24px',
       flex: '1 1 0%',
 
       [theme.breakpoints.down('sm')]: {
@@ -59,6 +58,7 @@ export const useStyles = makeStyles()(theme => {
       }
     },
     addButton: {
+      height: '48px',
       width: '100%',
       margin: '30px 0',
       cursor: 'default'
@@ -80,6 +80,16 @@ export const useStyles = makeStyles()(theme => {
         '@media (hover: none)': {
           filter: 'none'
         }
+      }
+    },
+    connectWalletButton: {
+      height: '48px !important',
+      borderRadius: '16px',
+      width: '100%',
+      margin: '30px 0',
+
+      [theme.breakpoints.down('sm')]: {
+        width: '100%'
       }
     }
   }

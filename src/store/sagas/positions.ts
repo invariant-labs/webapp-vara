@@ -785,6 +785,7 @@ export function* handleGetRemainingPositions(): Generator {
 export function* handleGetPositionsListPage(
   action: PayloadAction<{ index: number; refresh: boolean }>
 ) {
+  console.log('start handleGetPositionsListPage')
   const { index, refresh } = action.payload
 
   const walletAddress = yield* select(hexAddress)
@@ -820,12 +821,13 @@ export function* handleGetPositionsListPage(
       poolKey: entry[0].poolKey,
       ...entry[1]
     }))
-
+    console.log(poolsWithPoolKeys)
     yield* put(
       poolsActions.addPoolsForList({ data: poolsWithPoolKeys, listType: ListType.POSITIONS })
     )
+    console.log('fetchTokens')
     yield* call(fetchTokens, poolsWithPoolKeys)
-
+    console.log('fetchTokens done')
     yield* put(actions.setPositionsListLength(positionsLength))
   }
 

@@ -1,18 +1,17 @@
-import {
-  FeeTier,
-  HexString,
-  Pool,
-  PoolKey,
-  TESTNET_BTC_ADDRESS,
-  TESTNET_ETH_ADDRESS,
-  TESTNET_USDC_ADDRESS,
-  Tick,
-  Tickmap
-} from '@invariant-labs/vara-sdk'
-import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
+import { FeeTier, HexString, Network, Pool, PoolKey, Tick, Tickmap } from '@invariant-labs/vara-sdk'
 import { Liquidity } from '@invariant-labs/vara-sdk/target/schema'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
-import { BTC, ETH, USDC, VARA } from '@store/consts/static'
+import {
+  BTC_ADDRESS,
+  ETH_ADDRESS,
+  TESTNET_BTC,
+  TESTNET_ETH,
+  TESTNET_USDC,
+  TESTNET_VARA,
+  USDC_ADDRESS,
+  VARA_ADDRESS
+} from '@store/consts/static'
+
 import { PayloadType, Token } from '@store/consts/types'
 import { poolKeyToString } from '@utils/utils'
 
@@ -42,6 +41,8 @@ export interface IPoolsStore {
   isLoadingLatestPoolsForTransaction: boolean
   isLoadingTicksAndTickMaps: boolean
   isLoadingPoolKeys: boolean
+  isLoadingTokens: boolean
+  isLoadingTokensError: boolean
   tickMaps: { [key in string]: string }
 }
 
@@ -59,6 +60,18 @@ export interface UpdateTick {
   poolKey: PoolKey
   tickStructure: LiquidityTick[]
 }
+export interface DeleteTick {
+  address: string
+  index: number
+}
+export interface UpdateTicks extends DeleteTick {
+  tick: Tick
+}
+
+export interface UpdateTickmap {
+  address: string
+  bitmap: number[]
+}
 
 export interface FetchTicksAndTickMaps {
   tokenFrom: HexString
@@ -66,13 +79,20 @@ export interface FetchTicksAndTickMaps {
   allPools: PoolWithPoolKey[]
 }
 
+const network =
+  Network[localStorage.getItem('INVARIANT_NETWORK_AlephZero') as keyof typeof Network] ??
+  Network.Testnet
+
 export const defaultState: IPoolsStore = {
-  tokens: {
-    [TESTNET_BTC_ADDRESS]: BTC,
-    [TESTNET_ETH_ADDRESS]: ETH,
-    [TESTNET_USDC_ADDRESS]: USDC,
-    [VARA_ADDRESS]: VARA
-  },
+  tokens:
+    network === Network.Mainnet
+      ? {}
+      : {
+          [BTC_ADDRESS[Network.Testnet]]: TESTNET_BTC,
+          [ETH_ADDRESS[Network.Testnet]]: TESTNET_ETH,
+          [USDC_ADDRESS[Network.Testnet]]: TESTNET_USDC,
+          [VARA_ADDRESS[Network.Testnet]]: TESTNET_VARA
+        },
   pools: {},
   poolKeys: {},
   poolTicks: {},
@@ -80,6 +100,8 @@ export const defaultState: IPoolsStore = {
   isLoadingLatestPoolsForTransaction: false,
   isLoadingTicksAndTickMaps: false,
   isLoadingPoolKeys: true,
+  isLoadingTokens: true,
+  isLoadingTokensError: false,
   tickMaps: {}
 }
 
@@ -113,6 +135,7 @@ const poolsSlice = createSlice({
         ...state.tokens,
         ...action.payload
       }
+      state.isLoadingTokens = false
       return state
     },
     updateTokenBalances(state, action: PayloadAction<[HexString, bigint][]>) {
@@ -194,9 +217,16 @@ const poolsSlice = createSlice({
       state.isLoadingLatestPoolsForTransaction = true
       return state
     },
-    getPoolsDataForList(_state, _action: PayloadAction<ListPoolsRequest>) {},
     getTicksAndTickMaps(state, _action: PayloadAction<FetchTicksAndTickMaps>) {
       state.isLoadingTicksAndTickMaps = true
+      return state
+    },
+    getTokens(state, _action: PayloadAction<HexString[]>) {
+      state.isLoadingTokens = true
+      return state
+    },
+    setTokensError(state, action: PayloadAction<boolean>) {
+      state.isLoadingTokensError = action.payload
       return state
     }
   }

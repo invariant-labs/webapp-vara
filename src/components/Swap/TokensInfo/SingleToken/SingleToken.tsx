@@ -47,7 +47,7 @@ const SingleToken: React.FC<IProps> = ({ token, tokenPrice, copyTokenAddressHand
               {token?.symbol ? token.symbol : 'Select a token'}{' '}
             </Typography>
 
-            {/* {token && (
+            {token && (
               <TooltipHover text='Token details'>
                 <a
                   href={`https://ascan.alephzero.org/testnet/account/${token.assetAddress}`}
@@ -60,7 +60,7 @@ const SingleToken: React.FC<IProps> = ({ token, tokenPrice, copyTokenAddressHand
                   <img width={8} height={8} src={icons.newTab} alt={'Token address'} />
                 </a>
               </TooltipHover>
-            )} */}
+            )}
           </Grid>
           <Typography className={classes.tokenDescription}>
             {token?.name ? token.name : '--'}

@@ -1,54 +1,14 @@
-import { newPoolKey, PoolKey } from '@invariant-labs/vara-sdk'
+import { HexString, newPoolKey, PoolKey } from '@invariant-labs/vara-sdk'
 import { PayloadAction } from '@reduxjs/toolkit'
-import {
-  actions,
-  FetchTicksAndTickMaps,
-  ListPoolsRequest,
-  PairTokens,
-  PoolWithPoolKey
-} from '@store/reducers/pools'
+import { actions, FetchTicksAndTickMaps, PairTokens, PoolWithPoolKey } from '@store/reducers/pools'
 import { all, call, put, select, spawn, takeEvery, takeLatest } from 'typed-redux-saga'
 import { MAX_POOL_KEYS_RETURNED } from '@invariant-labs/vara-sdk/target/consts'
 import { getVft, getInvariant } from './connection'
 import { hexAddress } from '@store/selectors/wallet'
-import {
-  findPairs,
-  getPoolsByPoolKeys,
-  getTokenBalances,
-  getTokenDataByAddresses
-} from '@utils/utils'
+import { findPairs, getTokenDataByAddresses } from '@utils/utils'
 import { tokens } from '@store/selectors/pools'
+import { actions as walletActions } from '@store/reducers/wallet'
 
-export function* fetchPoolsDataForList(action: PayloadAction<ListPoolsRequest>) {
-  const walletAddress = yield* select(hexAddress)
-  const invariant = yield* getInvariant()
-  const pools = yield* call(getPoolsByPoolKeys, invariant, action.payload.poolKeys)
-  const vft = yield* getVft()
-  const allTokens = yield* select(tokens)
-  const unknownTokens = new Set(
-    action.payload.poolKeys.flatMap(({ tokenX, tokenY }) =>
-      [tokenX, tokenY].filter(token => !allTokens[token])
-    )
-  )
-  const knownTokens = new Set(
-    action.payload.poolKeys.flatMap(({ tokenX, tokenY }) =>
-      [tokenX, tokenY].filter(token => allTokens[token])
-    )
-  )
-
-  const unknownTokensData = yield* call(
-    getTokenDataByAddresses,
-    [...unknownTokens],
-    vft,
-    walletAddress
-  )
-  const knownTokenBalances = yield* call(getTokenBalances, [...knownTokens], vft, walletAddress)
-
-  yield* put(actions.addTokens(unknownTokensData))
-  yield* put(actions.updateTokenBalances(knownTokenBalances))
-
-  yield* put(actions.addPoolsForList({ data: pools, listType: action.payload.listType }))
-}
 export function* fetchPoolData(action: PayloadAction<PoolKey>): Generator {
   const { feeTier, tokenX, tokenY } = action.payload
 
@@ -150,34 +110,56 @@ export function* fetchTicksAndTickMaps(action: PayloadAction<FetchTicksAndTickMa
   }
 }
 
-export function* fetchTokens() {
-  // const walletAddress = yield* select(address)
-  // const allTokens = yield* select(tokens)
-  // const psp22 = yield* getPSP22()
-  // const unknownTokens = new Set(
-  //   poolsWithPoolKeys.flatMap(({ poolKey: { tokenX, tokenY } }) =>
-  //     [tokenX, tokenY].filter(token => !allTokens[token])
-  //   )
-  // )
-  // const knownTokens = new Set(
-  //   poolsWithPoolKeys.flatMap(({ poolKey: { tokenX, tokenY } }) =>
-  //     [tokenX, tokenY].filter(token => allTokens[token])
-  //   )
-  // )
-  // const unknownTokensData = yield* call(
-  //   getTokenDataByAddresses,
-  //   [...unknownTokens],
-  //   psp22,
-  //   walletAddress
-  // )
-  // const knownTokenBalances = yield* call(getTokenBalances, [...knownTokens], psp22, walletAddress)
-  // yield* put(walletActions.getBalances(Object.keys(unknownTokensData)))
-  // yield* put(actions.addTokens(unknownTokensData))
+export function* fetchTokens(poolsWithPoolKeys: PoolWithPoolKey[]) {
+  const walletAddress = yield* select(hexAddress)
+  const allTokens = yield* select(tokens)
+  const vft = yield* getVft()
+
+  const unknownTokens = new Set(
+    poolsWithPoolKeys.flatMap(({ poolKey: { tokenX, tokenY } }) =>
+      [tokenX, tokenY].filter(token => !allTokens[token])
+    )
+  )
+  const knownTokens = new Set(
+    poolsWithPoolKeys.flatMap(({ poolKey: { tokenX, tokenY } }) =>
+      [tokenX, tokenY].filter(token => allTokens[token])
+    )
+  )
+
+  const { unknownTokensData } = yield* all({
+    unknownTokensData: call(getTokenDataByAddresses, [...unknownTokens], vft, walletAddress)
+    // knownTokenBalances: call(getTokenBalances, [...knownTokens], vft, walletAddress)
+    //TODO fix get knownTokenBalances
+  })
+
+  console.log('unknownTokensData', unknownTokensData)
+  yield* put(actions.addTokens(unknownTokensData))
+
+  yield* put(
+    walletActions.addTokenBalances(
+      Object.entries(unknownTokensData).map(([address, token]) => ({
+        address,
+        balance: token.balance ?? 0n
+      }))
+    )
+  )
+
   // yield* put(actions.updateTokenBalances(knownTokenBalances))
 }
 
-export function* getPoolsDataForListHandler(): Generator {
-  yield* takeEvery(actions.getPoolsDataForList, fetchPoolsDataForList)
+export function* handleGetTokens(action: PayloadAction<HexString[]>) {
+  const tokens = action.payload
+
+  const walletAddress = yield* select(hexAddress)
+  const vft = yield* getVft()
+
+  try {
+    const tokensData = yield* call(getTokenDataByAddresses, tokens, vft, walletAddress)
+
+    yield* put(actions.addTokens(tokensData))
+  } catch (e) {
+    yield* put(actions.setTokensError(true))
+  }
 }
 
 export function* getPoolDataHandler(): Generator {
@@ -196,14 +178,18 @@ export function* getTicksAndTickMapsHandler(): Generator {
   yield* takeEvery(actions.getTicksAndTickMaps, fetchTicksAndTickMaps)
 }
 
+export function* getTokensHandler(): Generator {
+  yield* takeLatest(actions.getTokens, handleGetTokens)
+}
+
 export function* poolsSaga(): Generator {
   yield all(
     [
       getPoolDataHandler,
       getPoolKeysHandler,
-      getPoolsDataForListHandler,
       getAllPoolsForPairDataHandler,
-      getTicksAndTickMapsHandler
+      getTicksAndTickMapsHandler,
+      getTokensHandler
     ].map(spawn)
   )
 }

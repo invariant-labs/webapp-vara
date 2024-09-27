@@ -1,5 +1,4 @@
 import React from 'react'
-
 import { PERCENTAGE_SCALE } from '@invariant-labs/vara-sdk/target/consts'
 import { Grid, Typography } from '@mui/material'
 import loadingAnimation from '@static/gif/loading.gif'

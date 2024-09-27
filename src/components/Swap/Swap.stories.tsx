@@ -5,6 +5,7 @@ import Swap from './Swap'
 import { Provider } from 'react-redux'
 import { store } from '@store/index'
 import { MemoryRouter } from 'react-router-dom'
+import { Network } from '@invariant-labs/vara-sdk'
 
 const meta = {
   title: 'Components/Swap',
@@ -66,7 +67,8 @@ export const Primary: Story = {
     },
     simulateSwap: fn(),
     copyTokenAddressHandler: fn(),
-    varaBalance: 110832233990088 as any
+    network: Network.Testnet,
+    varaBalance: 20000000000000 as any
   },
   render: args => {
     return (

@@ -2,14 +2,16 @@ import { NightlyConnectAdapter } from '@nightlylabs/wallet-selector-polkadot'
 import { PayloadAction } from '@reduxjs/toolkit'
 import { actions as positionsActions } from '@store/reducers/positions'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
-import { Status, actions } from '@store/reducers/wallet'
-import { tokensWithoutVara } from '@store/selectors/pools'
+
+import { tokens } from '@store/selectors/pools'
 import { address, balance, hexAddress, status } from '@store/selectors/wallet'
 import { disconnectWallet, getVaraWallet } from '@utils/web3/wallet'
+import { actions, Status, actions as walletActions } from '@store/reducers/wallet'
 import {
   SagaGenerator,
   all,
   call,
+  delay,
   put,
   select,
   spawn,
@@ -27,13 +29,13 @@ import {
   DEPOSIT_VARA_SAFE_GAS_AMOUNT,
   FAUCET_DEPLOYER_MNEMONIC,
   FAUCET_SAFE_TRANSACTION_FEE,
-  FaucetTokenList,
+  getFaucetTokenList,
   TokenAirdropAmount
 } from '@store/consts/static'
 import { closeSnackbar } from 'notistack'
 import { ActorId, batchTxs, Invariant } from '@invariant-labs/vara-sdk'
 import { VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
-
+import { networkType } from '@store/selectors/connection'
 export function* getWallet(): SagaGenerator<NightlyConnectAdapter> {
   const wallet = yield* call(getVaraWallet)
   if (!wallet.connected) {
@@ -119,15 +121,17 @@ export function* handleAirdrop(): Generator {
     )
 
     const api = yield* getApi()
-
     const vft = yield* getVft()
+    const network = yield* select(networkType)
 
     vft.setAdmin(deployerAccount)
     const txs = []
 
-    for (const ticker in FaucetTokenList) {
-      const address = FaucetTokenList[ticker as keyof typeof FaucetTokenList]
-      const airdropAmount = TokenAirdropAmount[ticker as keyof typeof FaucetTokenList]
+    const faucetTokenList = getFaucetTokenList(network)
+
+    for (const ticker in faucetTokenList) {
+      const address = faucetTokenList[ticker as keyof typeof faucetTokenList]
+      const airdropAmount = TokenAirdropAmount[ticker as keyof typeof faucetTokenList]
 
       const mintTx = yield* call([vft, vft.mintTx], walletAddress, airdropAmount, address)
       txs.push(mintTx)
@@ -138,7 +142,7 @@ export function* handleAirdrop(): Generator {
     closeSnackbar(loaderAirdrop)
     yield put(snackbarsActions.remove(loaderAirdrop))
 
-    const tokenNames = Object.keys(FaucetTokenList).join(', ')
+    const tokenNames = Object.keys(faucetTokenList).join(', ')
 
     yield* put(
       snackbarsActions.add({
@@ -149,7 +153,7 @@ export function* handleAirdrop(): Generator {
       })
     )
 
-    yield* call(fetchBalances, [...Object.values(FaucetTokenList)])
+    yield* call(fetchBalances, [...Object.values(faucetTokenList)])
   } catch (error) {
     console.log(error)
 
@@ -160,6 +164,9 @@ export function* handleAirdrop(): Generator {
 
 export function* init(isEagerConnect: boolean): Generator {
   try {
+    if (isEagerConnect) {
+      yield* delay(500)
+    }
     yield* put(actions.setStatus(Status.Init))
 
     const walletAdapter = yield* call(getWallet)
@@ -186,9 +193,9 @@ export function* init(isEagerConnect: boolean): Generator {
 
     yield* put(actions.setAddress(accounts[0].address))
 
-    const allTokens = yield* select(tokensWithoutVara)
+    const allTokens = yield* select(tokens)
+    yield* call(fetchBalances, Object.keys(allTokens) as HexString[])
 
-    yield* call(fetchBalances, allTokens as HexString[])
     yield* put(actions.setStatus(Status.Initialized))
   } catch (error) {
     console.log(error)
@@ -248,12 +255,17 @@ export function* handleDisconnect(): Generator {
     console.log(error)
   }
 }
+
 export function* fetchBalances(tokens: HexString[]): Generator {
   try {
     const stringAddress = yield* select(address)
     const walletAddress = yield* select(hexAddress)
     const vft = yield* getVft()
     const tokensWithoutVara = tokens.filter(token => token !== VARA_ADDRESS)
+
+    if (!walletAddress) {
+      return
+    }
 
     yield* put(actions.setIsBalanceLoading(true))
 
@@ -262,18 +274,18 @@ export function* fetchBalances(tokens: HexString[]): Generator {
 
     const tokenBalances = yield* call(getTokenBalances, tokensWithoutVara, vft, walletAddress)
 
-    if (tokenBalances.length !== 0) {
-      yield* put(
-        actions.addTokenBalances(
-          tokenBalances.map(([address, balance]) => {
-            return {
-              address,
-              balance
-            }
-          })
-        )
+    yield* put(walletActions.setBalance(BigInt(balance)))
+
+    yield* put(
+      walletActions.addTokenBalances(
+        tokenBalances.map(([address, balance]) => {
+          return {
+            address,
+            balance
+          }
+        })
       )
-    }
+    )
     yield* put(actions.setIsBalanceLoading(false))
   } catch (error) {
     console.log(error)
