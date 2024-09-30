@@ -261,7 +261,7 @@ export function* fetchBalances(tokens: HexString[]): Generator {
     const stringAddress = yield* select(address)
     const walletAddress = yield* select(hexAddress)
     const vft = yield* getVft()
-    const tokensWithoutVara = tokens.filter(token => token !== VARA_ADDRESS)
+    const network = yield* select(networkType)
 
     if (!walletAddress) {
       return
@@ -272,7 +272,7 @@ export function* fetchBalances(tokens: HexString[]): Generator {
     const balance = yield* call(getBalance, stringAddress)
     yield* put(actions.setBalance(BigInt(balance)))
 
-    const tokenBalances = yield* call(getTokenBalances, tokensWithoutVara, vft, walletAddress)
+    const tokenBalances = yield* call(getTokenBalances, tokens, vft, walletAddress, network)
 
     yield* put(walletActions.setBalance(BigInt(balance)))
 

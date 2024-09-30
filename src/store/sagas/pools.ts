@@ -5,9 +5,10 @@ import { all, call, put, select, spawn, takeEvery, takeLatest } from 'typed-redu
 import { MAX_POOL_KEYS_RETURNED } from '@invariant-labs/vara-sdk/target/consts'
 import { getVft, getInvariant } from './connection'
 import { hexAddress } from '@store/selectors/wallet'
-import { findPairs, getTokenDataByAddresses } from '@utils/utils'
+import { findPairs, getTokenBalances, getTokenDataByAddresses } from '@utils/utils'
 import { tokens } from '@store/selectors/pools'
 import { actions as walletActions } from '@store/reducers/wallet'
+import { networkType } from '@store/selectors/connection'
 
 export function* fetchPoolData(action: PayloadAction<PoolKey>): Generator {
   const { feeTier, tokenX, tokenY } = action.payload
@@ -114,6 +115,7 @@ export function* fetchTokens(poolsWithPoolKeys: PoolWithPoolKey[]) {
   const walletAddress = yield* select(hexAddress)
   const allTokens = yield* select(tokens)
   const vft = yield* getVft()
+  const network = yield* select(networkType)
 
   const unknownTokens = new Set(
     poolsWithPoolKeys.flatMap(({ poolKey: { tokenX, tokenY } }) =>
@@ -126,15 +128,12 @@ export function* fetchTokens(poolsWithPoolKeys: PoolWithPoolKey[]) {
     )
   )
 
-  const { unknownTokensData } = yield* all({
-    unknownTokensData: call(getTokenDataByAddresses, [...unknownTokens], vft, walletAddress)
-    // knownTokenBalances: call(getTokenBalances, [...knownTokens], vft, walletAddress)
-    //TODO fix get knownTokenBalances
+  const { unknownTokensData, knownTokenBalances } = yield* all({
+    unknownTokensData: call(getTokenDataByAddresses, [...unknownTokens], vft, walletAddress),
+    knownTokenBalances: call(getTokenBalances, [...knownTokens], vft, walletAddress, network)
   })
-
   console.log('unknownTokensData', unknownTokensData)
   yield* put(actions.addTokens(unknownTokensData))
-
   yield* put(
     walletActions.addTokenBalances(
       Object.entries(unknownTokensData).map(([address, token]) => ({
@@ -143,8 +142,7 @@ export function* fetchTokens(poolsWithPoolKeys: PoolWithPoolKey[]) {
       }))
     )
   )
-
-  // yield* put(actions.updateTokenBalances(knownTokenBalances))
+  yield* put(actions.updateTokenBalances(knownTokenBalances))
 }
 
 export function* handleGetTokens(action: PayloadAction<HexString[]>) {

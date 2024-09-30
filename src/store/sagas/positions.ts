@@ -825,9 +825,8 @@ export function* handleGetPositionsListPage(
     yield* put(
       poolsActions.addPoolsForList({ data: poolsWithPoolKeys, listType: ListType.POSITIONS })
     )
-    console.log('fetchTokens')
+
     yield* call(fetchTokens, poolsWithPoolKeys)
-    console.log('fetchTokens done')
     yield* put(actions.setPositionsListLength(positionsLength))
   }
 

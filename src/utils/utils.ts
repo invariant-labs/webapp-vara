@@ -407,20 +407,23 @@ export const getTokenDataByAddresses = async (
 export const getTokenBalances = async (
   tokens: HexString[],
   vft: FungibleToken,
-  walletAddress: ActorId
+  walletAddress: ActorId,
+  network: Network
 ): Promise<[HexString, bigint][]> => {
-  if (!tokens.length) {
+  const tokensWithoutVara = tokens.filter((token: HexString) => token !== VARA_ADDRESS[network])
+
+  if (!tokensWithoutVara.length) {
     return []
   }
   const promises: Promise<bigint>[] = []
-  tokens.map(tokenAddress => {
+  tokensWithoutVara.map(tokenAddress => {
     promises.push(vft.balanceOf(walletAddress, tokenAddress))
   })
 
   const results = await Promise.all(promises)
 
   const tokenBalances: [HexString, bigint][] = []
-  tokens.map((token, index) => {
+  tokensWithoutVara.map((token, index) => {
     tokenBalances.push([token, results[index]])
   })
   console.log('token, ', tokenBalances)
