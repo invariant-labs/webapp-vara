@@ -378,10 +378,13 @@ export function* handleGetSimulateResult(action: PayloadAction<Simulate>) {
 
     let poolKey = null
     let amountOut = byAmountIn ? 0n : U128MAX
-    let insufficientLiquidityAmountOut = byAmountIn ? 0n : U128MAX
+    let insufficientLiquidityAmountOut = 0n
     let priceImpact = 0
     let targetSqrtPrice = 0n
     let fee = 0n
+
+    let swapPossible = false
+
     const errors = []
 
     for (const pool of filteredPools) {
@@ -403,12 +406,14 @@ export function* handleGetSimulateResult(action: PayloadAction<Simulate>) {
           if (
             byAmountIn
               ? result.amountOut > insufficientLiquidityAmountOut
-              : result.amountIn < insufficientLiquidityAmountOut
+              : result.amountIn > insufficientLiquidityAmountOut
           ) {
             insufficientLiquidityAmountOut = byAmountIn ? result.amountOut : result.amountIn
             fee = pool.poolKey.feeTier.fee
+            priceImpact = 1
             errors.push(SwapError.InsufficientLiquidity)
           }
+
           continue
         }
 
@@ -428,6 +433,7 @@ export function* handleGetSimulateResult(action: PayloadAction<Simulate>) {
         }
 
         if (byAmountIn ? result.amountOut > amountOut : result.amountIn < amountOut) {
+          swapPossible = true
           amountOut = byAmountIn ? result.amountOut : result.amountIn
           poolKey = pool.poolKey
           priceImpact = +printBigint(
@@ -441,11 +447,12 @@ export function* handleGetSimulateResult(action: PayloadAction<Simulate>) {
         errors.push(SwapError.Unknown)
       }
     }
+    const validatedAmountOut = swapPossible ? amountOut : insufficientLiquidityAmountOut
 
     yield put(
       actions.setSimulateResult({
-        poolKey,
-        amountOut: amountOut ? amountOut : insufficientLiquidityAmountOut,
+        poolKey: swapPossible ? poolKey : null,
+        amountOut: validatedAmountOut,
         priceImpact,
         targetSqrtPrice,
         fee,
