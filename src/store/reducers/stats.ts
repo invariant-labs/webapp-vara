@@ -15,13 +15,11 @@ export interface Value24H {
 export interface TokenStatsData {
   address: HexString
   price: number
-  // priceChange: number
   volume24: number
   tvl: number
 }
 
 export interface PoolStatsData {
-  poolAddress: string
   tokenX: HexString
   tokenY: HexString
   fee: number

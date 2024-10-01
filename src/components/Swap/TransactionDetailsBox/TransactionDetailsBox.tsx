@@ -1,5 +1,4 @@
 import React from 'react'
-
 import { PERCENTAGE_SCALE } from '@invariant-labs/vara-sdk/target/consts'
 import { Grid, Typography } from '@mui/material'
 import loadingAnimation from '@static/gif/loading.gif'
@@ -39,7 +38,7 @@ const TransactionDetailsBox: React.FC<IProps> = ({
             <Typography className={classes.value}>
               {exchangeRate.val === Infinity
                 ? '-'
-                : `${formatNumber(exchangeRate.val.toFixed(exchangeRate.decimal))} ${exchangeRate.symbol}`}
+                : `${formatNumber(exchangeRate.val.toFixed(exchangeRate.decimal)) === '0' ? '~0' : formatNumber(exchangeRate.val.toFixed(exchangeRate.decimal))} ${exchangeRate.symbol}`}
             </Typography>
           )}
         </Grid>

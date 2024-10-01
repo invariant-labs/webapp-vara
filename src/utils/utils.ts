@@ -19,10 +19,7 @@ import {
   PERCENTAGE_DENOMINATOR,
   PERCENTAGE_SCALE,
   PRICE_SCALE,
-  SQRT_PRICE_SCALE,
-  TESTNET_BTC_ADDRESS,
-  TESTNET_ETH_ADDRESS,
-  TESTNET_USDC_ADDRESS
+  SQRT_PRICE_SCALE
 } from '@invariant-labs/vara-sdk/target/consts'
 import {
   ActorId,
@@ -34,10 +31,10 @@ import { PoolWithPoolKey } from '@store/reducers/pools'
 import { PlotTickData } from '@store/reducers/positions'
 import axios from 'axios'
 import {
-  BTC,
+  BTC_ADDRESS,
   COINGECKO_QUERY_COOLDOWN,
   DEFAULT_TOKENS,
-  ETH,
+  ETH_ADDRESS,
   ErrorMessage,
   FormatConfig,
   LIQUIDITY_PLOT_DECIMAL,
@@ -45,11 +42,16 @@ import {
   POSITIONS_PER_QUERY,
   PositionTokenBlock,
   STABLECOIN_ADDRESSES,
-  USDC,
-  addressTickerMap,
+  TESTNET_BTC,
+  TESTNET_ETH,
+  TESTNET_USDC,
+  USDC_ADDRESS,
+  VARA_ADDRESS,
   defaultPrefixConfig,
   defaultThresholds,
-  reversedAddressTickerMap,
+  getAddressTickerMap,
+  getReversedAddressTickerMap,
+  mainnetList,
   subNumbers,
   tokensPrices
 } from '@store/consts/static'
@@ -59,6 +61,7 @@ import {
   CoinGeckoAPIData,
   FormatNumberThreshold,
   FullSnap,
+  PoolSnapshot,
   PrefixConfig,
   Token,
   TokenPriceData
@@ -262,7 +265,7 @@ export const getCoinGeckoTokenPrice = async (id: string): Promise<number | undef
   } else {
     try {
       const { data } = await axios.get<CoinGeckoAPIData>(
-        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${DEFAULT_TOKENS.map(token => token.coingeckoId)}`
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${DEFAULT_TOKENS}`
       )
       priceData = data
       localStorage.setItem('COINGECKO_PRICE_DATA', JSON.stringify(priceData))
@@ -361,6 +364,17 @@ export const getTokenDataByAddresses = async (
   vft: FungibleToken,
   walletAddress: HexString
 ): Promise<Record<HexString, Token>> => {
+  if (!tokens.length) {
+    return {}
+  }
+  const knownTokens: Record<HexString, Token> = {}
+
+  tokens.forEach(token => {
+    if (mainnetList[token]) {
+      knownTokens[token] = mainnetList[token]
+    }
+  })
+
   const promises = tokens.flatMap(token => {
     return [
       vft.symbol(token),
@@ -373,6 +387,9 @@ export const getTokenDataByAddresses = async (
 
   const newTokens: Record<string, Token> = {}
   tokens.forEach((token, index) => {
+    if (knownTokens[token]) {
+      return
+    }
     const baseIndex = index * 4
     newTokens[token] = {
       symbol: results[baseIndex] ? (results[baseIndex] as string) : 'UNKNOWN',
@@ -384,25 +401,32 @@ export const getTokenDataByAddresses = async (
       isUnknown: true
     }
   })
-  return newTokens
+  return { ...knownTokens, ...newTokens }
 }
 
 export const getTokenBalances = async (
   tokens: HexString[],
   vft: FungibleToken,
-  walletAddress: ActorId
+  walletAddress: ActorId,
+  network: Network
 ): Promise<[HexString, bigint][]> => {
+  const tokensWithoutVara = tokens.filter((token: HexString) => token !== VARA_ADDRESS[network])
+
+  if (!tokensWithoutVara.length) {
+    return []
+  }
   const promises: Promise<bigint>[] = []
-  tokens.map(tokenAddress => {
+  tokensWithoutVara.map(tokenAddress => {
     promises.push(vft.balanceOf(walletAddress, tokenAddress))
   })
 
   const results = await Promise.all(promises)
 
   const tokenBalances: [HexString, bigint][] = []
-  tokens.map((token, index) => {
+  tokensWithoutVara.map((token, index) => {
     tokenBalances.push([token, results[index]])
   })
+  console.log('token, ', tokenBalances)
   return tokenBalances
 }
 
@@ -435,14 +459,13 @@ export const poolKeyToString = (poolKey: PoolKey): string => {
 
 export const getNetworkTokensList = (networkType: Network): Record<HexString, Token> => {
   switch (networkType) {
-    case Network.Mainnet: {
-      return {}
-    }
+    case Network.Mainnet:
+      return mainnetList
     case Network.Testnet:
       return {
-        [USDC.address]: USDC,
-        [BTC.address]: BTC,
-        [ETH.address]: ETH
+        [TESTNET_USDC.address]: TESTNET_USDC,
+        [TESTNET_BTC.address]: TESTNET_BTC,
+        [TESTNET_ETH.address]: TESTNET_ETH
       }
     default:
       return {}
@@ -594,6 +617,26 @@ export const nearestTickIndex = (
   return BigInt(nearestSpacingMultiplicity(tick, Number(spacing)))
 }
 
+function safeConvertToBigInt(value: string): bigint {
+  if (value.toLowerCase().includes('e')) {
+    const [baseStr, exponentStr] = value.toLowerCase().split('e')
+
+    const baseBigInt = BigInt(baseStr.replace('.', ''))
+    const exponent = parseInt(exponentStr)
+    if (Math.abs(exponent) > 10000) {
+      return 0n
+    }
+
+    const decimalPlaces = (baseStr.split('.')[1] || '').length
+
+    const adjustedExponent = exponent - decimalPlaces
+
+    return baseBigInt * 10n ** BigInt(adjustedExponent)
+  } else {
+    return BigInt(value)
+  }
+}
+
 export const convertBalanceToBigint = (amount: string, decimals: bigint | number): bigint => {
   const balanceString = amount.split('.')
   if (balanceString.length !== 2) {
@@ -601,7 +644,7 @@ export const convertBalanceToBigint = (amount: string, decimals: bigint | number
   }
 
   if (balanceString[1].length <= decimals) {
-    return BigInt(
+    return safeConvertToBigInt(
       balanceString[0] + balanceString[1] + '0'.repeat(Number(decimals) - balanceString[1].length)
     )
   }
@@ -743,8 +786,8 @@ export const calculateAmountInWithSlippage = (
 ): bigint => {
   const price = +printBigint(sqrtPriceToPrice(sqrtPriceLimit), PRICE_SCALE)
   const amountIn = xToY
-    ? Math.ceil(Number(amountOut) / price)
-    : Math.ceil(Number(amountOut) * price)
+    ? Math.ceil(Number(amountOut + 1n) / price)
+    : Math.ceil(Number(amountOut + 1n) * price)
 
   const amountInWithFee = BigInt(
     Math.ceil(
@@ -863,7 +906,14 @@ export const formatNumber = (
 ): string => {
   const numberAsNumber = Number(number)
   const isNegative = numberAsNumber < 0
-  const absNumberAsString = numberToString(Math.abs(numberAsNumber))
+  const absNumberAsNumber = Math.abs(numberAsNumber)
+
+  if (absNumberAsNumber.toString().includes('e')) {
+    const exponential = absNumberAsNumber.toExponential(decimalsAfterDot)
+    return isNegative ? `-${exponential}` : exponential
+  }
+
+  const absNumberAsString = numberToString(absNumberAsNumber)
 
   if (containsOnlyZeroes(absNumberAsString)) {
     return '0'
@@ -873,7 +923,7 @@ export const formatNumber = (
 
   let formattedNumber
 
-  if (Math.abs(numberAsNumber) > FormatConfig.B) {
+  if (Math.abs(numberAsNumber) >= FormatConfig.B) {
     const formattedDecimals = noDecimals
       ? ''
       : (FormatConfig.DecimalsAfterDot ? '.' : '') +
@@ -881,9 +931,10 @@ export const formatNumber = (
           0,
           FormatConfig.DecimalsAfterDot
         )
+
     formattedNumber =
       beforeDot.slice(0, -FormatConfig.BDecimals) + (noDecimals ? '' : formattedDecimals) + 'B'
-  } else if (Math.abs(numberAsNumber) > FormatConfig.M) {
+  } else if (Math.abs(numberAsNumber) >= FormatConfig.M) {
     const formattedDecimals = noDecimals
       ? ''
       : (FormatConfig.DecimalsAfterDot ? '.' : '') +
@@ -893,7 +944,7 @@ export const formatNumber = (
         )
     formattedNumber =
       beforeDot.slice(0, -FormatConfig.MDecimals) + (noDecimals ? '' : formattedDecimals) + 'M'
-  } else if (Math.abs(numberAsNumber) > FormatConfig.K) {
+  } else if (Math.abs(numberAsNumber) >= FormatConfig.K) {
     const formattedDecimals = noDecimals
       ? ''
       : (FormatConfig.DecimalsAfterDot ? '.' : '') +
@@ -988,12 +1039,12 @@ export const stringToFixed = (string: string, numbersAfterDot: number): string =
   return string.includes('.') ? string.slice(0, string.indexOf('.') + 1 + numbersAfterDot) : string
 }
 
-export const tickerToAddress = (ticker: string): string => {
-  return addressTickerMap[ticker] || ticker
+export const tickerToAddress = (network: Network, ticker: string): string => {
+  return getAddressTickerMap(network)[ticker] || ticker
 }
 
-export const addressToTicker = (address: string): string => {
-  return reversedAddressTickerMap[address] || address
+export const addressToTicker = (network: Network, address: string): string => {
+  return getReversedAddressTickerMap(network)[address] || address
 }
 
 export const initialXtoY = (tokenXAddress?: string, tokenYAddress?: string) => {
@@ -1022,14 +1073,15 @@ export const ensureError = (value: unknown): Error => {
   return error
 }
 
-export function testnetBestTiersCreator() {
+export function bestTiersCreator(network: Network) {
   const stableTokens = {
-    USDC: TESTNET_USDC_ADDRESS
+    USDC: USDC_ADDRESS[network]
   }
 
   const unstableTokens = {
-    BTC: TESTNET_BTC_ADDRESS,
-    ETH: TESTNET_ETH_ADDRESS
+    BTC: BTC_ADDRESS[network],
+    ETH: ETH_ADDRESS[network],
+    VARA: VARA_ADDRESS[network]
   }
 
   const bestTiers: BestTier[] = []
@@ -1172,6 +1224,22 @@ export const findClosestIndexByValue = (arr: number[], value: number): number =>
     }
   }
   return high
+}
+
+export const getNetworkStats = async (name: string): Promise<Record<string, PoolSnapshot[]>> => {
+  const { data } = await axios.get<Record<string, PoolSnapshot[]>>(
+    `https://stats.invariant.app/vara/full/${name}`
+  )
+
+  return data
+}
+
+export const getCoingeckoPricesData = async (): Promise<CoinGeckoAPIData> => {
+  const { data } = await axios.get<CoinGeckoAPIData>(
+    `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${DEFAULT_TOKENS}`
+  )
+
+  return data
 }
 
 export const getFullSnap = async (name: string): Promise<FullSnap> => {

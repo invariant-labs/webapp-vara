@@ -1,3 +1,4 @@
+import { Network } from '@invariant-labs/vara-sdk'
 import { PositionItem } from './PositionItem'
 
 import type { Meta, StoryObj } from '@storybook/react'
@@ -13,7 +14,7 @@ type Story = StoryObj<typeof meta>
 export const Primary: Story = {
   args: {
     tokenXName: 'BTC',
-    tokenYName: 'VARA',
+    tokenYName: 'AZERO',
     tokenXIcon: '',
     tokenYIcon: '',
     min: 2149.6,
@@ -25,6 +26,8 @@ export const Primary: Story = {
     address: '',
     tokenXLiq: 5000,
     tokenYLiq: 300.2,
-    currentPrice: 10000
+    currentPrice: 10000,
+    network: Network.Testnet,
+    isFullRange: false
   }
 }

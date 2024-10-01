@@ -6,6 +6,7 @@ import classNames from 'classnames'
 import { useMemo, useState } from 'react'
 import { useStyles } from './style'
 import { TooltipHover } from '@components/TooltipHover/TooltipHover'
+import { Network } from '@invariant-labs/vara-sdk'
 
 export interface IPositionItem {
   tokenXName: string
@@ -23,6 +24,8 @@ export interface IPositionItem {
   currentPrice: number
   tokenXLiq: number
   tokenYLiq: number
+  network: Network
+  isFullRange: boolean
 }
 
 export const PositionItem: React.FC<IPositionItem> = ({
@@ -38,7 +41,9 @@ export const PositionItem: React.FC<IPositionItem> = ({
   isActive = false,
   currentPrice,
   tokenXLiq,
-  tokenYLiq
+  tokenYLiq,
+  network,
+  isFullRange
 }) => {
   const { classes } = useStyles()
 
@@ -46,7 +51,7 @@ export const PositionItem: React.FC<IPositionItem> = ({
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
 
   const [xToY, setXToY] = useState<boolean>(
-    initialXtoY(tickerToAddress(tokenXName), tickerToAddress(tokenYName))
+    initialXtoY(tickerToAddress(network, tokenXName), tickerToAddress(network, tokenYName))
   )
 
   const getPercentageRatio = () => {
@@ -206,15 +211,21 @@ export const PositionItem: React.FC<IPositionItem> = ({
           justifyContent='space-between'
           alignItems='center'
           wrap='nowrap'>
-          <Typography className={classNames(classes.greenText, classes.label)}>
-            MIN - MAX
-          </Typography>
-          <Grid className={classes.infoCenter} container item justifyContent='center'>
-            <Typography className={classes.infoText}>
-              {formatNumber(xToY ? min : 1 / max)} - {formatNumber(xToY ? max : 1 / min)}{' '}
-              {xToY ? tokenYName : tokenXName} per {xToY ? tokenXName : tokenYName}
+          <>
+            <Typography className={classNames(classes.greenText, classes.label)}>
+              MIN - MAX
             </Typography>
-          </Grid>
+            <Grid className={classes.infoCenter} container item justifyContent='center'>
+              {isFullRange ? (
+                <Typography className={classes.infoText}>FULL RANGE</Typography>
+              ) : (
+                <Typography className={classes.infoText}>
+                  {formatNumber(xToY ? min : 1 / max)} - {formatNumber(xToY ? max : 1 / min)}{' '}
+                  {xToY ? tokenYName : tokenXName} per {xToY ? tokenXName : tokenYName}
+                </Typography>
+              )}
+            </Grid>
+          </>
         </Grid>
 
         <Hidden mdDown>{valueFragment}</Hidden>

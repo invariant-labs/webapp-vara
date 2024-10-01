@@ -59,7 +59,7 @@ export const PositionsList: React.FC<IProps> = ({
       getRemainingPositions()
     }
 
-    searchSetValue(e.target.value.toLowerCase())
+    searchSetValue(e.target.value.toLocaleLowerCase())
   }
 
   const handleChangePagination = (page: number): void => {
@@ -108,7 +108,9 @@ export const PositionsList: React.FC<IProps> = ({
         <Grid className={classes.searchRoot}>
           <Grid className={classes.titleBar}>
             <Typography className={classes.title}>Your Positions</Typography>
-            <Typography className={classes.positionsNumber}>{String(length)}</Typography>
+            <TooltipHover text='Total number of your positions'>
+              <Typography className={classes.positionsNumber}>{String(length)}</Typography>
+            </TooltipHover>
           </Grid>
           <Grid className={classes.searchWrapper}>
             <InputBase
@@ -139,10 +141,7 @@ export const PositionsList: React.FC<IProps> = ({
                   </Button>
                 </Grid>
               </TooltipHover>
-              <Button
-                className={showNoConnected ? classes.buttonSelectDisabled : classes.button}
-                variant='contained'
-                onClick={showNoConnected ? () => {} : onAddPositionClick}>
+              <Button className={classes.button} variant='contained' onClick={onAddPositionClick}>
                 <span className={classes.buttonText}>+ Add Position</span>
               </Button>
             </Grid>

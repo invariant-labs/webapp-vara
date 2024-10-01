@@ -11,7 +11,6 @@ export interface ITokensListData {
   name: string
   symbol: string
   price: number
-  // priceChange: number
   volume: number
   TVL: number
 }

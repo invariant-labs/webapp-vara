@@ -16,13 +16,46 @@ import {
   Token,
   TokenPriceData
 } from './types'
-import { testnetBestTiersCreator } from '@utils/utils'
-import { POSITIONS_ENTRIES_LIMIT, VARA_ADDRESS } from '@invariant-labs/vara-sdk/target/consts'
+import { bestTiersCreator } from '@utils/utils'
+import {
+  POSITIONS_ENTRIES_LIMIT,
+  TESTNET_INVARIANT_ADDRESS,
+  VARA_ADDRESS as VARA_ADDRESS_SDK
+} from '@invariant-labs/vara-sdk/target/consts'
+import mainnetListJson from '@store/consts/tokenLists/mainnet.json'
+
+export const VARA_ADDRESS: Record<Network, HexString> = {
+  [Network.Mainnet]: '0x',
+  [Network.Testnet]: VARA_ADDRESS_SDK,
+  [Network.Local]: '0x'
+}
+
+export const BTC_ADDRESS: Record<Network, HexString> = {
+  [Network.Mainnet]: '0x',
+  [Network.Testnet]: TESTNET_BTC_ADDRESS,
+  [Network.Local]: '0x'
+}
+export const ETH_ADDRESS: Record<Network, HexString> = {
+  [Network.Mainnet]: '0x',
+  [Network.Testnet]: TESTNET_ETH_ADDRESS,
+  [Network.Local]: '0x'
+}
+export const USDC_ADDRESS: Record<Network, HexString> = {
+  [Network.Mainnet]: '0x',
+  [Network.Testnet]: TESTNET_USDC_ADDRESS,
+  [Network.Local]: '0x'
+}
+
+export const INVARIANT_ADDRESS: Record<Network, HexString> = {
+  [Network.Mainnet]: '0x',
+  [Network.Testnet]: TESTNET_INVARIANT_ADDRESS,
+  [Network.Local]: '0x'
+}
+export const USDT_MAINNET_ADDRESS = '0x'
 
 export enum RPC {
   TEST = 'wss://testnet.vara.network',
   MAIN = 'wss://rpc.vara.network'
-  // LOCAL = Network.Local
 }
 
 export const POSITIONS_PER_PAGE = 5
@@ -48,15 +81,17 @@ export const TokenAirdropAmount = {
   USDC: 50000000n
 }
 
-export const FaucetTokenList = {
-  BTC: TESTNET_BTC_ADDRESS,
-  ETH: TESTNET_ETH_ADDRESS,
-  USDC: TESTNET_USDC_ADDRESS
+export const getFaucetTokenList = (network: Network) => {
+  return {
+    BTC: BTC_ADDRESS[network],
+    ETH: ETH_ADDRESS[network],
+    USDC: USDC_ADDRESS[network]
+  }
 }
 
-export const BTC: Token = {
+export const TESTNET_BTC: Token = {
   symbol: 'BTC',
-  address: TESTNET_BTC_ADDRESS,
+  address: BTC_ADDRESS[Network.Testnet],
   decimals: 8n,
   name: 'Bitcoin',
   logoURI:
@@ -64,9 +99,9 @@ export const BTC: Token = {
   coingeckoId: 'bitcoin'
 }
 
-export const ETH: Token = {
+export const TESTNET_ETH: Token = {
   symbol: 'ETH',
-  address: TESTNET_ETH_ADDRESS,
+  address: ETH_ADDRESS[Network.Testnet],
   decimals: 12n,
   name: 'Ether',
   logoURI:
@@ -74,9 +109,9 @@ export const ETH: Token = {
   coingeckoId: 'ethereum'
 }
 
-export const USDC: Token = {
+export const TESTNET_USDC: Token = {
   symbol: 'USDC',
-  address: TESTNET_USDC_ADDRESS,
+  address: USDC_ADDRESS[Network.Testnet],
   decimals: 6n,
   name: 'USDC',
   logoURI:
@@ -84,28 +119,71 @@ export const USDC: Token = {
   coingeckoId: 'usd-coin'
 }
 
-export const VARA: Token = {
+export const TESTNET_VARA: Token = {
   symbol: 'VARA',
-  address: VARA_ADDRESS,
+  address: VARA_ADDRESS[Network.Testnet],
   decimals: 12n,
   name: 'Vara',
   logoURI: 'https://assets.coingecko.com/coins/images/31458/standard/vara.jpeg?1696530272',
   coingeckoId: 'vara-network'
 }
 
-export const DEFAULT_TOKENS = [BTC, ETH, USDC, VARA]
+export const DEFAULT_TOKENS = ['bitcoin', 'ethereum', 'usd-coin', 'vara-network']
 
 export const bestTiers: Record<Network, BestTier[]> = {
-  [Network.Testnet]: testnetBestTiersCreator(),
+  [Network.Testnet]: bestTiersCreator(Network.Testnet),
   [Network.Mainnet]: [],
-  [Network.Local]: []
+  [Network.Local]: bestTiersCreator(Network.Local)
 }
 
 export const commonTokensForNetworks: Record<Network, HexString[]> = {
-  [Network.Testnet]: [BTC.address, ETH.address, USDC.address, VARA.address],
-  [Network.Mainnet]: [],
+  [Network.Testnet]: [
+    TESTNET_BTC.address,
+    TESTNET_ETH.address,
+    TESTNET_USDC.address,
+    TESTNET_VARA.address
+  ],
+  [Network.Mainnet]: [
+    VARA_ADDRESS[Network.Mainnet],
+    BTC_ADDRESS[Network.Mainnet],
+    ETH_ADDRESS[Network.Mainnet],
+    USDC_ADDRESS[Network.Mainnet],
+    USDT_MAINNET_ADDRESS
+  ],
   [Network.Local]: []
 }
+
+const commonTokensLogos = {
+  [BTC_ADDRESS[Network.Mainnet]]:
+    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png',
+  [ETH_ADDRESS[Network.Mainnet]]:
+    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png',
+  [USDC_ADDRESS[Network.Mainnet]]:
+    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+  [VARA_ADDRESS[Network.Mainnet]]:
+    'https://assets.coingecko.com/coins/images/31458/standard/vara.jpeg?1696530272',
+  [USDT_MAINNET_ADDRESS]:
+    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg'
+}
+
+export const mainnetList = (() => {
+  const parsedMainnetList: Record<string, Token> = {}
+
+  const mainnetList = mainnetListJson as unknown as Record<string, Token>
+
+  Object.keys(mainnetList).forEach(token => {
+    if (commonTokensLogos[token]) {
+      parsedMainnetList[token] = {
+        ...mainnetList[token],
+        logoURI: commonTokensLogos[token]
+      }
+    } else {
+      parsedMainnetList[token] = mainnetList[token]
+    }
+  })
+
+  return parsedMainnetList
+})()
 
 export const ALL_FEE_TIERS_DATA = FEE_TIERS.map((tier, index) => ({
   tier,
@@ -188,16 +266,32 @@ export const defaultPrefixConfig: PrefixConfig = {
   K: 10000
 }
 
-export const addressTickerMap: { [key: string]: string } = {
-  BTC: TESTNET_BTC_ADDRESS,
-  ETH: TESTNET_ETH_ADDRESS,
-  USDC: TESTNET_USDC_ADDRESS,
-  VARA: VARA_ADDRESS
+export const getAddressTickerMap = (network: Network): { [k: string]: string } => {
+  if (network !== Network.Mainnet) {
+    return {
+      BTC: BTC_ADDRESS[network],
+      ETH: ETH_ADDRESS[network],
+      USDC: USDC_ADDRESS[network],
+      VARA: VARA_ADDRESS[network]
+    }
+  } else {
+    const parsedMainnetList = mainnetList as unknown as Record<string, Token>
+    const result: { [k: string]: string } = {}
+
+    Object.keys(parsedMainnetList).forEach((key: string) => {
+      const token = parsedMainnetList[key]
+      result[token.symbol] = token.address
+    })
+
+    return result
+  }
 }
 
-export const reversedAddressTickerMap = Object.fromEntries(
-  Object.entries(addressTickerMap).map(([key, value]) => [value, key])
-)
+export const getReversedAddressTickerMap = (network: Network) => {
+  return Object.fromEntries(
+    Object.entries(getAddressTickerMap(network)).map(([key, value]) => [value, key])
+  )
+}
 
 export const LIQUIDITY_PLOT_DECIMAL = 12n
 
@@ -205,8 +299,8 @@ export const DEFAULT_TOKEN_DECIMAL = 12n
 
 export const EMPTY_POSITION: Position = {
   poolKey: {
-    tokenX: TESTNET_BTC_ADDRESS,
-    tokenY: TESTNET_ETH_ADDRESS,
+    tokenX: TESTNET_BTC.address,
+    tokenY: TESTNET_ETH.address,
     feeTier: { fee: 0n, tickSpacing: 1n }
   },
   liquidity: 0n,
@@ -217,6 +311,8 @@ export const EMPTY_POSITION: Position = {
   lastBlockNumber: 0n,
   tokensOwedX: 0n,
   tokensOwedY: 0n
+  // secondsPerLiquidityInside: 0n,
+  // createdAt: 0n
 }
 
 export const POSITIONS_PER_QUERY =
@@ -258,4 +354,10 @@ export const enum SortTypeTokenList {
   VOLUME_DESC,
   TVL_ASC,
   TVL_DESC
+}
+
+export const RECOMMENDED_RPC_ADDRESS = {
+  [Network.Testnet]: RPC.TEST,
+  [Network.Mainnet]: RPC.MAIN,
+  [Network.Local]: ''
 }
