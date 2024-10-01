@@ -28,6 +28,7 @@ import { VariantType } from 'notistack'
 import { decodeAddress, HexString } from '@gear-js/api'
 import apiSingleton from '@store/services/apiSingleton'
 import vftSingleton from '@store/services/vftSingleton'
+import { PRICE_SCALE } from '@invariant-labs/vara-sdk'
 
 type Props = {
   initialTokenFrom: string
