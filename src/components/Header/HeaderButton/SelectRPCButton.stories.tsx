@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import SelectRPCButton from './SelectRPCButton'
+import { Network } from '@invariant-labs/vara-sdk'
 import { RPC } from '@store/consts/static'
 import { action } from '@storybook/addon-actions'
-import { Network } from '@invariant-labs/vara-sdk'
+import { RpcStatus } from '@store/reducers/connection'
 
 const meta = {
   title: 'Buttons/SelectRPCButton',
@@ -22,6 +23,8 @@ export const Primary: Story = {
         rpcName: 'Testnet'
       }
     ],
-    onSelect: (networkType, rpc) => action('chosen: ' + networkType + ' ' + rpc)()
+    onSelect: (networkType, rpc) => action('chosen: ' + networkType + ' ' + rpc)(),
+    network: Network.Testnet,
+    rpcStatus: RpcStatus.Uninitialized
   }
 }

@@ -21,7 +21,6 @@ import Liquidity from '@components/Stats/Liquidity/Liquidity'
 import VolumeBar from '@components/Stats/volumeBar/VolumeBar'
 import TokensList from '@components/Stats/TokensList/TokensList'
 import PoolList from '@components/Stats/PoolList/PoolList'
-import { Network } from '@invariant-labs/vara-sdk'
 
 export const WrappedStats: React.FC = () => {
   const { classes } = useStyles()
@@ -44,11 +43,7 @@ export const WrappedStats: React.FC = () => {
 
   return (
     <Grid container className={classes.wrapper} direction='column'>
-      {currentNetwork !== Network.Testnet ? (
-        <Grid container direction='column' alignItems='center'>
-          <EmptyPlaceholder desc={'We have not started collecting statistics yet'} />
-        </Grid>
-      ) : isLoadingStats ? (
+      {isLoadingStats ? (
         <img src={loader} className={classes.loading} alt='Loading' />
       ) : liquidityPlotData.length === 0 ? (
         <Grid container direction='column' alignItems='center'>
@@ -104,7 +99,9 @@ export const WrappedStats: React.FC = () => {
               iconTo: poolData.tokenYDetails?.logoURI,
               volume: poolData.volume24,
               TVL: poolData.tvl,
-              fee: poolData.fee
+              fee: poolData.fee,
+              addressFrom: poolData.tokenX,
+              addressTo: poolData.tokenY
               // apy: poolData.apy,
               // apyData: {
               //   fees: poolData.apy,
@@ -120,6 +117,7 @@ export const WrappedStats: React.FC = () => {
               //   accumulatedFarmsAvg: accumulatedAverageAPY?.[poolData.poolAddress.toString()] ?? 0
               // }
             }))}
+            network={currentNetwork}
           />
         </>
       )}

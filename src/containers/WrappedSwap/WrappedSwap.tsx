@@ -11,7 +11,7 @@ import {
 } from '@utils/utils'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { Simulate, actions } from '@store/reducers/swap'
-import { actions as walletActions } from '@store/reducers/wallet'
+import { Status, actions as walletActions } from '@store/reducers/wallet'
 import { actions as poolsActions } from '@store/reducers/pools'
 import { networkType } from '@store/selectors/connection'
 import {
@@ -25,7 +25,7 @@ import { openWalletSelectorModal } from '@utils/web3/selector'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { VariantType } from 'notistack'
-import { HexString } from '@gear-js/api'
+import { decodeAddress, HexString } from '@gear-js/api'
 import apiSingleton from '@store/services/apiSingleton'
 import vftSingleton from '@store/services/vftSingleton'
 
@@ -39,12 +39,12 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
 
   const walletAddress = useSelector(hexAddress)
   const walletStatus = useSelector(status)
+  const varaBalance = useSelector(balance)
   const swap = useSelector(swapPool)
   const tickmap = useSelector(tickMaps)
   const allPools = useSelector(poolsArraySortedByFees)
-  const tokensDict = useSelector(swapTokens)
+  const tokensList = useSelector(swapTokens)
   const isBalanceLoading = useSelector(balanceLoading)
-  const varaBalance = useSelector(balance)
   const { success, inProgress } = useSelector(swapPool)
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const network = useSelector(networkType)
@@ -88,19 +88,35 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
   }, [isFetchingNewPool])
 
   const lastTokenFrom =
-    tickerToAddress(initialTokenFrom) && initialTokenFrom !== '-'
-      ? tickerToAddress(initialTokenFrom)
+    tickerToAddress(network, initialTokenFrom) && initialTokenFrom !== '-'
+      ? tickerToAddress(network, initialTokenFrom)
       : localStorage.getItem(`INVARIANT_LAST_TOKEN_FROM_${network}`)
 
   const lastTokenTo =
-    tickerToAddress(initialTokenTo) && initialTokenTo !== '-'
-      ? tickerToAddress(initialTokenTo)
+    tickerToAddress(network, initialTokenTo) && initialTokenTo !== '-'
+      ? tickerToAddress(network, initialTokenTo)
       : localStorage.getItem(`INVARIANT_LAST_TOKEN_TO_${network}`)
+
+  useEffect(() => {
+    const tokens: HexString[] = []
+
+    if (lastTokenFrom && !tokensList[lastTokenFrom]) {
+      tokens.push(decodeAddress(lastTokenFrom))
+    }
+
+    if (lastTokenTo && !tokensList[lastTokenTo]) {
+      tokens.push(decodeAddress(lastTokenTo))
+    }
+
+    if (tokens.length) {
+      dispatch(poolsActions.getTokens(tokens))
+    }
+  }, [])
 
   const addTokenHandler = async (address: HexString) => {
     const vft = await vftSingleton.getInstance()
     const api = await apiSingleton.loadInstance(network)
-    if (vft && api !== null && !tokensDict[address]) {
+    if (vft && api !== null && !tokensList[address]) {
       getNewTokenOrThrow(address, vft, walletAddress)
         .then(data => {
           dispatch(poolsActions.addTokens(data))
@@ -151,7 +167,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       return
     }
 
-    const id = tokensDict[tokenFrom.toString()]?.coingeckoId || ''
+    const id = tokensList[tokenFrom.toString()]?.coingeckoId || ''
 
     if (id.length) {
       setPriceFromLoading(true)
@@ -159,7 +175,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
         .then(data => setTokenFromPriceData({ price: data ?? 0 }))
         .catch(() =>
           setTokenFromPriceData(
-            getMockedTokenPrice(tokensDict[tokenFrom.toString()].symbol, network)
+            getMockedTokenPrice(tokensList[tokenFrom.toString()].symbol, network)
           )
         )
         .finally(() => setPriceFromLoading(false))
@@ -175,13 +191,13 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       return
     }
 
-    const id = tokensDict[tokenTo.toString()]?.coingeckoId || ''
+    const id = tokensList[tokenTo.toString()]?.coingeckoId || ''
     if (id.length) {
       setPriceToLoading(true)
       getCoinGeckoTokenPrice(id)
         .then(data => setTokenToPriceData({ price: data ?? 0 }))
         .catch(() =>
-          setTokenToPriceData(getMockedTokenPrice(tokensDict[tokenTo.toString()].symbol, network))
+          setTokenToPriceData(getMockedTokenPrice(tokensList[tokenTo.toString()].symbol, network))
         )
         .finally(() => setPriceToLoading(false))
     } else {
@@ -200,7 +216,9 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       return
     }
 
-    dispatch(walletActions.getBalances([tokenFromAddress, tokenToAddress]))
+    if (walletStatus === Status.Initialized) {
+      dispatch(walletActions.getBalances([tokenFromAddress, tokenToAddress]))
+    }
 
     dispatch(
       poolsActions.getAllPoolsForPairData({
@@ -213,21 +231,21 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       return
     }
 
-    const idTo = tokensDict[tokenTo].coingeckoId ?? ''
+    const idTo = tokensList[tokenTo].coingeckoId ?? ''
 
     if (idTo.length) {
       setPriceToLoading(true)
       getCoinGeckoTokenPrice(idTo)
         .then(data => setTokenToPriceData({ price: data ?? 0 }))
         .catch(() =>
-          setTokenToPriceData(getMockedTokenPrice(tokensDict[tokenTo.toString()].symbol, network))
+          setTokenToPriceData(getMockedTokenPrice(tokensList[tokenTo.toString()].symbol, network))
         )
         .finally(() => setPriceToLoading(false))
     } else {
       setTokenToPriceData(undefined)
     }
 
-    const idFrom = tokensDict[tokenFrom].coingeckoId ?? ''
+    const idFrom = tokensList[tokenFrom].coingeckoId ?? ''
 
     if (idFrom.length) {
       setPriceFromLoading(true)
@@ -235,7 +253,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
         .then(data => setTokenFromPriceData({ price: data ?? 0 }))
         .catch(() =>
           setTokenFromPriceData(
-            getMockedTokenPrice(tokensDict[tokenFrom.toString()].symbol, network)
+            getMockedTokenPrice(tokensList[tokenFrom.toString()].symbol, network)
           )
         )
         .finally(() => setPriceFromLoading(false))
@@ -273,7 +291,6 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
         byAmountIn
       ) => {
         setProgress('progress')
-
         dispatch(
           actions.swap({
             poolKey,
@@ -321,7 +338,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
         dispatch(walletActions.disconnect())
       }}
       walletStatus={walletStatus}
-      tokens={tokensDict}
+      tokens={tokensList}
       pools={allPools}
       swapData={swap}
       progress={progress}
@@ -343,6 +360,7 @@ export const WrappedSwap = ({ initialTokenFrom, initialTokenTo }: Props) => {
       simulateResult={swapSimulateResult}
       simulateSwap={simulateSwap}
       copyTokenAddressHandler={copyTokenAddressHandler}
+      network={network}
       varaBalance={varaBalance}
     />
   )

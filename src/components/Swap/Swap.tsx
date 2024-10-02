@@ -3,7 +3,7 @@ import ChangeWalletButton from '@components/Header/HeaderButton/ChangeWalletButt
 import ExchangeAmountInput from '@components/Inputs/ExchangeAmountInput/ExchangeAmountInput'
 import Slippage from '@components/Modals/Slippage/Slippage'
 import Refresher from '@components/Refresher/Refresher'
-import { HexString, PoolKey, Price } from '@invariant-labs/vara-sdk'
+import { HexString, Network, PoolKey, Price } from '@invariant-labs/vara-sdk'
 import { PERCENTAGE_DENOMINATOR } from '@invariant-labs/vara-sdk/target/consts'
 import { Box, Button, Grid, Typography } from '@mui/material'
 import refreshIcon from '@static/svg/refresh.svg'
@@ -100,6 +100,7 @@ export interface ISwap {
   simulateResult: SimulateResult
   simulateSwap: (simulate: Simulate) => void
   copyTokenAddressHandler: (message: string, variant: VariantType) => void
+  network: Network
   varaBalance: bigint
 }
 
@@ -133,6 +134,7 @@ export const Swap: React.FC<ISwap> = ({
   simulateResult,
   simulateSwap,
   copyTokenAddressHandler,
+  network,
   varaBalance
 }) => {
   const { classes } = useStyles()
@@ -166,7 +168,7 @@ export const Swap: React.FC<ISwap> = ({
 
   useEffect(() => {
     navigate(
-      `/exchange/${tokenFrom !== '0x' && tokenFrom ? addressToTicker(tokenFrom) : '-'}/${tokenTo !== '0x' && tokenTo ? addressToTicker(tokenTo) : '-'}`,
+      `/exchange/${tokenFrom !== '0x' && tokenFrom ? addressToTicker(network, tokenFrom) : '-'}/${tokenTo !== '0x' && tokenTo ? addressToTicker(network, tokenTo) : '-'}`,
       {
         replace: true
       }
@@ -190,7 +192,7 @@ export const Swap: React.FC<ISwap> = ({
 
   useEffect(() => {
     onSetPair(tokenFrom, tokenTo)
-  }, [tokenFrom, tokenTo, pools.length])
+  }, [tokenFrom, tokenTo])
 
   useEffect(() => {
     if (inputRef === inputTarget.FROM && !(amountFrom === '' && amountTo === '')) {
@@ -338,8 +340,9 @@ export const Swap: React.FC<ISwap> = ({
     }
 
     if (
-      convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom].decimals)) >
-      tokens[tokenFrom].balance
+      convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom]?.decimals) ?? 0n) >
+        tokens[tokenFrom]?.balance ||
+      0n
     ) {
       return 'Insufficient balance'
     }
@@ -349,7 +352,7 @@ export const Swap: React.FC<ISwap> = ({
     }
 
     if (
-      convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom].decimals)) === 0n ||
+      convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom]?.decimals ?? 0n)) === 0n ||
       (simulateResult.poolKey === null && isError(SwapError.AmountIsZero))
     ) {
       return 'Insufficient volume'
@@ -357,7 +360,7 @@ export const Swap: React.FC<ISwap> = ({
 
     if (
       tokenFrom !== null &&
-      convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom].decimals)) !== 0n &&
+      convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom]?.decimals ?? 0n)) !== 0n &&
       isError(SwapError.Unknown)
     ) {
       return 'Not enough liquidity'
@@ -732,6 +735,40 @@ export const Swap: React.FC<ISwap> = ({
             onDisconnect={onDisconnectWallet}
             className={classes.connectWalletButton}
           />
+        ) : getStateMessage() === 'Insufficient VARA' ? (
+          <TooltipHover
+            text='More AZERO is required to cover the transaction fee. Obtain more AZERO to complete this transaction.'
+            top={-45}>
+            <div>
+              <AnimatedButton
+                content={getStateMessage()}
+                className={
+                  getStateMessage() === 'Connect a wallet'
+                    ? `${classes.swapButton}`
+                    : getStateMessage() === 'Exchange' && progress === 'none'
+                      ? `${classes.swapButton} ${classes.ButtonSwapActive}`
+                      : classes.swapButton
+                }
+                disabled={getStateMessage() !== 'Exchange' || progress !== 'none'}
+                onClick={() => {
+                  if (simulateResult.poolKey === null || tokenFrom === null || tokenTo === null)
+                    return
+
+                  onSwap(
+                    simulateResult.poolKey,
+                    BigInt((+slippTolerance * Number(PERCENTAGE_DENOMINATOR)) / 100),
+                    simulateResult.targetSqrtPrice,
+                    tokenFrom,
+                    tokenTo,
+                    convertBalanceToBigint(amountFrom, tokens[tokenFrom].decimals),
+                    convertBalanceToBigint(amountTo, tokens[tokenTo].decimals),
+                    inputRef === inputTarget.FROM
+                  )
+                }}
+                progress={progress}
+              />
+            </div>
+          </TooltipHover>
         ) : (
           <AnimatedButton
             content={getStateMessage()}

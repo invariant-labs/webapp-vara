@@ -1,5 +1,5 @@
 import { actions } from '@store/reducers/pools'
-import { actions as walletActions } from '@store/reducers/wallet'
+// import { actions as walletActions } from '@store/reducers/wallet'
 import { invariantAddress, networkType, rpcAddress, status } from '@store/selectors/connection'
 import { poolsArraySortedByFees } from '@store/selectors/pools'
 import { swap } from '@store/selectors/swap'
@@ -45,7 +45,8 @@ const MarketEvents = () => {
         .finally(() => {
           dispatch(actions.addTokens(tokens))
         })
-      dispatch(walletActions.getBalances(currentList))
+      // dispatch(walletActions.getBalances(currentList))
+      //check
     }
 
     connectEvents()
