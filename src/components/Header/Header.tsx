@@ -15,10 +15,12 @@ import SelectNetworkButton from './HeaderButton/SelectNetworkButton'
 import SelectRPCButton from './HeaderButton/SelectRPCButton'
 import useButtonStyles from './HeaderButton/style'
 import useStyles from './style'
+import { Network } from '@invariant-labs/vara-sdk'
 import SelectChainButton from './HeaderButton/SelectChainButton'
 import { ISelectChain } from '@store/consts/types'
 import SelectChain from '@components/Modals/SelectChain/SelectChain'
-import { Network } from '@invariant-labs/vara-sdk'
+import SelectMainnetRPC from '@components/Modals/SelectMainnetRPC/SelectMainnetRPC'
+import { RpcStatus } from '@store/reducers/connection'
 
 export interface IHeader {
   address: string
@@ -35,6 +37,9 @@ export interface IHeader {
   onChangeWallet: () => void
   activeChain: ISelectChain
   onChainSelect: (chain: ISelectChain) => void
+  network: Network
+  defaultMainnetRPC: string
+  rpcStatus: RpcStatus
 }
 
 export const Header: React.FC<IHeader> = ({
@@ -51,7 +56,10 @@ export const Header: React.FC<IHeader> = ({
   onCopyAddress,
   onChangeWallet,
   activeChain,
-  onChainSelect
+  onChainSelect,
+  network,
+  defaultMainnetRPC,
+  rpcStatus
 }) => {
   const { classes } = useStyles()
   const buttonStyles = useButtonStyles()
@@ -81,7 +89,15 @@ export const Header: React.FC<IHeader> = ({
     {
       networkType: Network.Testnet,
       rpc: RPC.TEST,
-      rpcName: 'Vara'
+      rpcName: 'VARA '
+    }
+  ]
+
+  const mainnetRPCs = [
+    {
+      networkType: Network.Mainnet,
+      rpc: RPC.MAIN,
+      rpcName: 'VARA Mainnet'
     }
   ]
 
@@ -159,11 +175,15 @@ export const Header: React.FC<IHeader> = ({
                 </Button>
               </Box>
             ) : null}
-            {typeOfNetwork === Network.Testnet ? (
-              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <SelectRPCButton rpc={rpc} networks={testnetRPCs} onSelect={onNetworkSelect} />
-              </Box>
-            ) : null}
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+              <SelectRPCButton
+                rpc={rpc}
+                networks={network === Network.Testnet ? testnetRPCs : mainnetRPCs}
+                onSelect={onNetworkSelect}
+                network={network}
+                rpcStatus={rpcStatus}
+              />
+            </Box>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
               <SelectChainButton
                 activeChain={activeChain}
@@ -179,6 +199,12 @@ export const Header: React.FC<IHeader> = ({
                   rpc: defaultTestnetRPC,
                   rpcName:
                     testnetRPCs.find(data => data.rpc === defaultTestnetRPC)?.rpcName ?? 'Custom'
+                },
+                {
+                  networkType: Network.Mainnet,
+                  rpc: defaultMainnetRPC,
+                  rpcName:
+                    mainnetRPCs.find(data => data.rpc === defaultMainnetRPC)?.rpcName ?? 'Custom'
                 }
               ]}
               onSelect={onNetworkSelect}
@@ -231,9 +257,9 @@ export const Header: React.FC<IHeader> = ({
               setRoutesModalOpen(false)
               unblurContent()
             }}
-            onFaucet={typeOfNetwork === Network.Testnet && isMdDown ? onFaucet : undefined}
+            onFaucet={isMdDown ? onFaucet : undefined}
             onRPC={
-              typeOfNetwork === Network.Testnet && isMdDown
+              isMdDown
                 ? () => {
                     setRoutesModalOpen(false)
                     setTestnetRpcsOpen(true)
@@ -260,8 +286,22 @@ export const Header: React.FC<IHeader> = ({
                 unblurContent()
               }}
               activeRPC={rpc}
+              rpcStatus={rpcStatus}
             />
-          ) : null}
+          ) : (
+            <SelectMainnetRPC
+              networks={mainnetRPCs}
+              open={testnetRpcsOpen}
+              anchorEl={routesModalAnchor}
+              onSelect={onNetworkSelect}
+              handleClose={() => {
+                setTestnetRpcsOpen(false)
+                unblurContent()
+              }}
+              activeRPC={rpc}
+              rpcStatus={rpcStatus}
+            />
+          )}
           <SelectChain
             chains={CHAINS}
             open={chainSelectOpen}

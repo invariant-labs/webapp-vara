@@ -13,7 +13,7 @@ import {
   poolKeyToString,
   printBigint
 } from '@utils/utils'
-import { actions as poolsActions } from '@store/reducers/pools'
+
 import { actions } from '@store/reducers/positions'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { Status, actions as walletActions } from '@store/reducers/wallet'
@@ -29,9 +29,11 @@ import { balanceLoading, status } from '@store/selectors/wallet'
 import { VariantType } from 'notistack'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import useStyles from './style'
 import { TokenPriceData } from '@store/consts/types'
+import { NoConnected } from '@components/NoConnected/NoConnected'
+import { openWalletSelectorModal } from '@utils/web3/selector'
 
 export interface IProps {
   address: string
@@ -44,7 +46,7 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const allPools = useSelector(poolsArraySortedByFees)
+  const network = useSelector(networkType)
   const currentNetwork = useSelector(networkType)
   const position = useSelector(singlePositionData(id))
   const isLoadingList = useSelector(isLoadingPositionsList)
@@ -61,6 +63,7 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
   } = useSelector(currentPositionTicks)
   const walletStatus = useSelector(status)
   const isBalanceLoading = useSelector(balanceLoading)
+  const poolsArray = useSelector(poolsArraySortedByFees)
 
   const [waitingForTicksData, setWaitingForTicksData] = useState<boolean | null>(null)
 
@@ -69,18 +72,6 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
   const [isFinishedDelayRender, setIsFinishedDelayRender] = useState(false)
 
   const poolKey = position?.poolKey ? poolKeyToString(position?.poolKey) : ''
-
-  useEffect(() => {
-    if (position?.tokenX && position?.tokenY) {
-      dispatch(
-        poolsActions.getTicksAndTickMaps({
-          tokenFrom: position.tokenX.assetAddress,
-          tokenTo: position.tokenY.assetAddress,
-          allPools
-        })
-      )
-    }
-  }, [waitingForTicksData, position?.tokenX, position?.tokenY])
 
   useEffect(() => {
     if (position?.poolKey && waitingForTicksData === null && allTickMaps[poolKey] !== undefined) {
@@ -93,14 +84,8 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
           upperTickIndex: position.upperTickIndex
         })
       )
-      dispatch(
-        actions.getCurrentPlotTicks({
-          poolKey: position.poolKey,
-          isXtoY: true
-        })
-      )
     }
-  }, [position, position?.poolKey, allTickMaps, waitingForTicksData])
+  }, [position, allTickMaps])
 
   useEffect(() => {
     if (waitingForTicksData === true && !currentPositionTicksLoading) {
@@ -287,6 +272,7 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
   }
 
   useEffect(() => {
+    dispatch(actions.getRemainingPositions())
     const timer = setTimeout(() => {
       setIsFinishedDelayRender(true)
     }, 1000)
@@ -297,14 +283,25 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
   }, [walletStatus])
 
   useEffect(() => {
+    if (!position && walletStatus === Status.Initialized) {
+      dispatch(actions.getSinglePosition(id))
+    }
     if (isFinishedDelayRender) {
       setIsFinishedDelayRender(false)
     }
   }, [walletStatus])
 
   useEffect(() => {
-    onRefresh()
-  }, [])
+    if (position && poolsArray.length !== 0) {
+      dispatch(
+        actions.getCurrentPlotTicks({
+          poolKey: position.poolKey,
+          isXtoY: true,
+          fetchTicksAndTickmap: true
+        })
+      )
+    }
+  }, [poolsArray])
 
   const onRefresh = () => {
     setShowFeesLoader(true)
@@ -403,13 +400,11 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
         }}
         onRefresh={onRefresh}
         isBalanceLoading={isBalanceLoading}
+        network={network}
       />
     )
   }
-  if (
-    (isLoadingList && walletStatus === Status.Initialized) ||
-    (!position && walletStatus === Status.Uninitialized && !isFinishedDelayRender)
-  ) {
+  if ((isLoadingList && walletStatus === Status.Initialized) || !isFinishedDelayRender) {
     return (
       <Grid
         container
@@ -420,16 +415,36 @@ export const SinglePositionWrapper: React.FC<IProps> = ({ id }) => {
       </Grid>
     )
   }
-  if (!position && walletStatus !== Status.Initialized) {
-    return <Navigate to='/liquidity' />
+  if (walletStatus !== Status.Initialized) {
+    return (
+      <Grid
+        display='flex'
+        position='relative'
+        justifyContent='center'
+        className={classes.fullHeightContainer}>
+        <NoConnected
+          onConnect={async () => {
+            await openWalletSelectorModal()
+            dispatch(walletActions.connect(false))
+          }}
+          title='Connect a wallet to view your position,'
+          descCustomText='or start exploring liquidity pools now!'
+        />
+      </Grid>
+    )
   }
+
   return (
     <Grid
-      container
+      display='flex'
+      position='relative'
       justifyContent='center'
-      alignItems='center'
       className={classes.fullHeightContainer}>
-      <EmptyPlaceholder desc='Position does not exist in your list!' />
+      <EmptyPlaceholder
+        desc='The position does not exist in your list! '
+        onAction={() => navigate('/liquidity')}
+        buttonName='Back to positions'
+      />
     </Grid>
   )
 }

@@ -11,6 +11,7 @@ import { TokenPriceData } from '@store/consts/types'
 import { addressToTicker } from '@utils/utils'
 import { TooltipHover } from '@components/TooltipHover/TooltipHover'
 import icons from '@static/icons'
+import { Network } from '@invariant-labs/vara-sdk'
 
 interface IProp {
   fee: number
@@ -26,6 +27,7 @@ interface IProp {
   userHasStakes?: boolean
   isBalanceLoading: boolean
   isActive: boolean
+  network: Network
 }
 
 const SinglePositionInfo: React.FC<IProp> = ({
@@ -41,7 +43,8 @@ const SinglePositionInfo: React.FC<IProp> = ({
   showFeesLoader = false,
   userHasStakes = false,
   isBalanceLoading,
-  isActive
+  isActive,
+  network
 }) => {
   const navigate = useNavigate()
 
@@ -92,7 +95,7 @@ const SinglePositionInfo: React.FC<IProp> = ({
               {xToY ? tokenX.name : tokenY.name} - {xToY ? tokenY.name : tokenX.name}
             </Typography>
           </Grid>
-          <Grid className={classes.rangeGrid}>
+          <Grid className={classes.rangeGrid} sx={{ display: { xs: 'flex', md: 'none' } }}>
             <Tooltip
               title={
                 isActive ? (
@@ -124,26 +127,62 @@ const SinglePositionInfo: React.FC<IProp> = ({
         </Grid>
 
         <Grid className={classes.headerButtons}>
-          <Button
-            className={classes.closeButton}
-            variant='contained'
-            onClick={() => {
-              if (!userHasStakes) {
-                closePosition()
-              } else {
-                setIsModalOpen(true)
-                blurContent()
+          <Grid className={classes.rangeGrid} sx={{ display: { xs: 'none', md: 'flex' } }}>
+            <Tooltip
+              title={
+                isActive ? (
+                  <>
+                    The position is <b>active</b> and currently <b>earning a fee</b> as long as the
+                    current price is <b>within</b> the position's price range.
+                  </>
+                ) : (
+                  <>
+                    The position is <b>inactive</b> and <b>not earning a fee</b> as long as the
+                    current price is <b>outside</b> the position's price range.
+                  </>
+                )
               }
-            }}>
-            Close position
-          </Button>
+              placement='top'
+              classes={{
+                tooltip: classes.tooltip
+              }}>
+              <Typography
+                className={classNames(
+                  classes.text,
+                  classes.feeText,
+                  isActive ? classes.active : null
+                )}>
+                {fee.toString()}% fee
+              </Typography>
+            </Tooltip>
+          </Grid>
+          <TooltipHover
+            text={
+              tokenX.claimValue > 0 || tokenY.claimValue > 0
+                ? 'Unclaimed fees will be returned when closing the position'
+                : ''
+            }>
+            <Button
+              className={classes.closeButton}
+              variant='contained'
+              onClick={() => {
+                if (!userHasStakes) {
+                  closePosition()
+                } else {
+                  setIsModalOpen(true)
+                  blurContent()
+                }
+              }}>
+              Close position
+            </Button>
+          </TooltipHover>
           <Hidden smUp>
             <Button
               className={classes.button}
               variant='contained'
               onClick={() => {
-                const address1 = addressToTicker(tokenX.name)
-                const address2 = addressToTicker(tokenY.name)
+                const address1 = addressToTicker(network, tokenX.name)
+                const address2 = addressToTicker(network, tokenY.name)
 
                 navigate(`/newPosition/${address1}/${address2}/${fee}`)
               }}>

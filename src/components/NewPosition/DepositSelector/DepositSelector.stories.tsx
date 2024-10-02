@@ -6,6 +6,8 @@ import { SwapToken } from '@store/selectors/wallet'
 import { Provider } from 'react-redux'
 import { store } from '@store/index'
 import { MemoryRouter } from 'react-router-dom'
+import { Network } from '@invariant-labs/vara-sdk'
+import { Status } from '@store/reducers/wallet'
 
 const tokens: Record<string, SwapToken> = {
   '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E': {
@@ -104,7 +106,11 @@ export const Primary: Story = {
     isBalanceLoading: false,
     isGetLiquidityError: false,
     ticksLoading: false,
-    varaBalance: 110832233990088 as any
+    network: Network.Testnet,
+    varaBalance: 110832233990088 as any,
+    walletStatus: Status.Initialized,
+    onConnectWallet: () => {},
+    onDisconnectWallet: () => {}
   },
   render: args => <PrimaryComponent {...args} />
 }

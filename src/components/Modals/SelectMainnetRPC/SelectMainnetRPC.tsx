@@ -9,7 +9,7 @@ import { RpcStatus } from '@store/reducers/connection'
 import { RECOMMENDED_RPC_ADDRESS } from '@store/consts/static'
 import icons from '@static/icons'
 
-export interface ISelectTestnetRPC {
+export interface ISelectMainnetRPC {
   networks: ISelectNetwork[]
   open: boolean
   anchorEl: HTMLButtonElement | null
@@ -18,7 +18,7 @@ export interface ISelectTestnetRPC {
   activeRPC: string
   rpcStatus: RpcStatus
 }
-export const SelectTestnetRPC: React.FC<ISelectTestnetRPC> = ({
+export const SelectMainnetRPC: React.FC<ISelectMainnetRPC> = ({
   networks,
   anchorEl,
   open,
@@ -81,9 +81,9 @@ export const SelectTestnetRPC: React.FC<ISelectTestnetRPC> = ({
         horizontal: 'center'
       }}>
       <Grid className={classes.root}>
-        <Typography className={classes.title}>Select testnet RPC to use</Typography>
+        <Typography className={classes.title}>Select mainnet RPC to use</Typography>
         {rpcStatus === RpcStatus.IgnoredWithError &&
-          activeRPC !== RECOMMENDED_RPC_ADDRESS[Network.Testnet] && (
+          activeRPC !== RECOMMENDED_RPC_ADDRESS[Network.Mainnet] && (
             <div className={classes.warningContainer}>
               <img className={classes.warningIcon} src={icons.warningIcon} alt='Warning icon' />
               <Typography className={classes.warningText}>
@@ -111,7 +111,7 @@ export const SelectTestnetRPC: React.FC<ISelectTestnetRPC> = ({
               <Box width='100%' display='flex' justifyContent='space-between' alignItems='center'>
                 <Typography className={classes.name}>{rpcName} </Typography>
                 <Typography className={classes.recommendedText}>
-                  {RECOMMENDED_RPC_ADDRESS[Network.Testnet] === rpc && 'RECOMMENDED'}
+                  {RECOMMENDED_RPC_ADDRESS[Network.Mainnet] === rpc && 'RECOMMENDED'}
                 </Typography>
               </Box>
               <DotIcon className={classes.dotIcon} />
@@ -159,7 +159,7 @@ export const SelectTestnetRPC: React.FC<ISelectTestnetRPC> = ({
           <Button
             className={classNames(classes.add, buttonApplied ? classes.applied : null)}
             onClick={() => {
-              onSelect(Network.Testnet, address, 'Custom')
+              onSelect(Network.Mainnet, address, 'Custom')
               setCustomApplied(true)
               setButtonApplied(true)
               handleClose()
@@ -174,4 +174,4 @@ export const SelectTestnetRPC: React.FC<ISelectTestnetRPC> = ({
     </Popover>
   )
 }
-export default SelectTestnetRPC
+export default SelectMainnetRPC
