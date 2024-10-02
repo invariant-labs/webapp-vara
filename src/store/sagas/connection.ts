@@ -1,11 +1,11 @@
-import { all, call, put, SagaGenerator, select, takeLeading, spawn, delay } from 'typed-redux-saga'
-import { actions, Status, PayloadTypes } from '@store/reducers/connection'
+import { all, call, put, SagaGenerator, select, takeLeading, spawn } from 'typed-redux-saga'
+import { actions, Status } from '@store/reducers/connection'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
 import { PayloadAction } from '@reduxjs/toolkit'
 import apiSingleton from '@store/services/apiSingleton'
 import vftSingleton from '@store/services/vftSingleton'
 import invariantSingleton from '@store/services/invariantSingleton'
-import { FungibleToken, Invariant } from '@invariant-labs/vara-sdk'
+import { FungibleToken, Invariant, Network } from '@invariant-labs/vara-sdk'
 import { GearApi } from '@gear-js/api'
 import { networkType } from '@store/selectors/connection'
 
@@ -69,20 +69,17 @@ export function* initConnection(): Generator {
   }
 }
 
-export function* handleNetworkChange(action: PayloadAction<PayloadTypes['setNetwork']>): Generator {
-  yield* delay(1000)
-
-  yield* getApi()
-
+export function* handleNetworkChange(action: PayloadAction<Network>): Generator {
   yield* put(
     snackbarsActions.add({
-      message: `You are on network ${action.payload.networkType}${
-        action.payload?.rpcName ? ' (' + action.payload.rpcName + ')' : ''
-      }.`,
+      message: `You are on network ${action.payload}`,
       variant: 'info',
       persist: false
     })
   )
+
+  localStorage.setItem('INVARIANT_NETWORK_AlephZero', action.payload)
+  window.location.reload()
 }
 
 export function* networkChangeSaga(): Generator {

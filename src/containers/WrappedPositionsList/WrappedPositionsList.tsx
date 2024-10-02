@@ -1,5 +1,5 @@
 import { PositionsList } from '@components/PositionsList/PositionsList'
-import { calculateTokenAmounts } from '@invariant-labs/vara-sdk'
+import { calculateTokenAmounts, getMaxTick, getMinTick, Network } from '@invariant-labs/vara-sdk'
 import { PERCENTAGE_SCALE } from '@invariant-labs/vara-sdk/target/consts'
 import { POSITIONS_PER_PAGE } from '@store/consts/static'
 import {
@@ -79,6 +79,8 @@ export const WrappedPositionsList: React.FC = () => {
           position.tokenY.decimals
         )
       )
+      const minTick = getMinTick(position.poolKey.feeTier.tickSpacing)
+      const maxTick = getMaxTick(position.poolKey.feeTier.tickSpacing)
 
       const min = Math.min(lowerPrice, upperPrice)
       const max = Math.max(lowerPrice, upperPrice)
@@ -130,13 +132,15 @@ export const WrappedPositionsList: React.FC = () => {
         isActive: currentPrice >= min && currentPrice <= max,
         currentPrice,
         tokenXLiq,
-        tokenYLiq
+        tokenYLiq,
+        network: Network.Testnet,
+        isFullRange: position.lowerTickIndex === minTick && position.upperTickIndex === maxTick
       }
     })
     .filter(item => {
       return (
-        item.tokenXName.toLowerCase().includes(value) ||
-        item.tokenYName.toLowerCase().includes(value)
+        item.tokenXName.toLowerCase().includes(value.toLowerCase()) ||
+        item.tokenYName.toLowerCase().includes(value.toLowerCase())
       )
     })
 
@@ -165,7 +169,8 @@ export const WrappedPositionsList: React.FC = () => {
           await openWalletSelectorModal()
           dispatch(walletActions.connect(false))
         },
-        descCustomText: 'You have no positions.'
+        title: 'Start exploring liquidity pools right now!',
+        descCustomText: 'Or, connect your wallet to see existing positions, and create a new one!'
       }}
       pageChanged={page => {
         const index = positionListPageToQueryPage(page)

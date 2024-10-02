@@ -6,6 +6,8 @@ import { Chain } from '@store/consts/types'
 import { Provider } from 'react-redux'
 import { store } from '@store/index'
 import { Network } from '@invariant-labs/vara-sdk'
+import { RpcStatus } from '@store/reducers/connection'
+import { RPC } from '@store/consts/static'
 
 const meta = {
   title: 'Layout/Header',
@@ -40,9 +42,12 @@ export const Primary: Story = {
     onCopyAddress: fn(),
     onChangeWallet: fn(),
     activeChain: {
-      name: Chain.Vara,
+      name: Chain.AlephZero,
       address: 'https://vara.invariant.app/exchange'
     },
-    onChainSelect: fn()
+    onChainSelect: fn(),
+    network: Network.Testnet,
+    defaultMainnetRPC: RPC.TEST,
+    rpcStatus: RpcStatus.Uninitialized
   }
 }

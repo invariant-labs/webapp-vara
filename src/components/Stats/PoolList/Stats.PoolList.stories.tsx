@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router-dom'
 import PoolList from './PoolList'
 import { store } from '@store/index'
 import { Provider } from 'react-redux'
+import { Network } from '@invariant-labs/vara-sdk'
+import { decodeAddress } from '@gear-js/api'
 
 const meta = {
   title: 'Stats/PoolList',
@@ -51,7 +53,7 @@ const poolsList = Array(40)
         accumulatedFarmsSingleTick: randomAccumulatedFarmsSingleTick
       },
       tokenXDetails: {
-        address: '5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA',
+        address: '0x5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA',
         chainId: 101,
         decimals: 6,
         name: 'UST (Portal)',
@@ -63,7 +65,7 @@ const poolsList = Array(40)
         coingeckoId: 'terrausd-wormhole'
       },
       tokenYDetails: {
-        address: '5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA',
+        address: '0x5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA',
         chainId: 101,
         decimals: 6,
         name: 'USD Coin',
@@ -75,12 +77,15 @@ const poolsList = Array(40)
         coingeckoId: 'usd-coin'
       },
       volume24: randomVolume24,
-      tvl: randomTvl24
+      tvl: randomTvl24,
+      addressFrom: decodeAddress('5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA'),
+      addressTo: decodeAddress('5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA')
     }
   })
 
 export const Primary: Story = {
   args: {
-    data: poolsList
+    data: poolsList,
+    network: Network.Local
   }
 }

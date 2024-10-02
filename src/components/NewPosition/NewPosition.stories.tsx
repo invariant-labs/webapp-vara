@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { fn } from '@storybook/test'
 import { MemoryRouter } from 'react-router-dom'
-import NewPosition, { INewPosition } from './NewPosition'
+import NewPosition from './NewPosition'
 import { Network } from '@invariant-labs/vara-sdk'
+import { Status } from '@store/reducers/wallet'
 
 const meta = {
   title: 'PageComponent/NewPosition',
@@ -18,10 +19,6 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-const PrimaryComponent: React.FC<INewPosition> = args => {
-  return <NewPosition {...args} />
-}
 
 export const Primary: Story = {
   args: {
@@ -68,10 +65,6 @@ export const Primary: Story = {
     calcAmount: fn(),
     loadingTicksAndTickMaps: false,
     poolKey: '',
-    noConnectedBlockerProps: {
-      onConnect: fn(),
-      descCustomText: 'Cannot add any liquidity.'
-    },
     onRefresh: fn(),
     isBalanceLoading: false,
     shouldNotUpdatePriceRange: false,
@@ -80,7 +73,72 @@ export const Primary: Story = {
     onlyUserPositions: false,
     setOnlyUserPositions: fn(),
     network: Network.Testnet,
-    varaBalance: 110832233990088 as any
+    isLoadingTokens: false,
+    varaBalance: 20000000000000 as any,
+    walletStatus: Status.Initialized,
+    onConnectWallet: () => {},
+    onDisconnectWallet: () => {}
   },
-  render: args => <PrimaryComponent {...args} />
+  render: () => {
+    return (
+      <NewPosition
+        midPrice={{ x: 1234, index: 23n, sqrtPrice: 123n }}
+        currentPriceSqrt={123n}
+        tickSpacing={1n}
+        xDecimal={9n}
+        yDecimal={12n}
+        commonTokens={[]}
+        handleAddToken={fn()}
+        onChangePositionTokens={fn()}
+        onPositionOpeningMethodChange={fn()}
+        onSlippageChange={fn()}
+        onHideUnknownTokensChange={fn()}
+        copyPoolAddressHandler={fn()}
+        reloadHandler={fn()}
+        setMidPrice={fn()}
+        ticksLoading={false}
+        hasTicksError={false}
+        progress='progress'
+        isCurrentPoolExisting={true}
+        isWaitingForNewPool={false}
+        poolIndex={0}
+        tokens={{}}
+        bestTiers={[]}
+        currentPairReversed={false}
+        isXtoY={true}
+        initialTokenFrom='BTC'
+        initialTokenTo='ETH'
+        initialFee='0.05'
+        initialSlippage='0.01'
+        initialOpeningPositionMethod='concentration'
+        initialHideUnknownTokensValue={false}
+        data={[]}
+        currentFeeIndex={0}
+        feeTiers={[
+          { feeValue: 0.1 },
+          { feeValue: 0.2 },
+          { feeValue: 0.3 },
+          { feeValue: 0.4 },
+          { feeValue: 0.5 }
+        ]}
+        addLiquidityHandler={fn()}
+        calcAmount={() => 1n}
+        loadingTicksAndTickMaps={false}
+        poolKey=''
+        onRefresh={fn()}
+        isBalanceLoading={false}
+        shouldNotUpdatePriceRange={false}
+        unblockUpdatePriceRange={fn()}
+        isGetLiquidityError={false}
+        onlyUserPositions={false}
+        setOnlyUserPositions={fn()}
+        network={Network.Testnet}
+        isLoadingTokens={false}
+        varaBalance={20000000000000n}
+        walletStatus={Status.Initialized}
+        onConnectWallet={() => {}}
+        onDisconnectWallet={() => {}}
+      />
+    )
+  }
 }

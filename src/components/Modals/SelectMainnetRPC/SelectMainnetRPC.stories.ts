@@ -1,27 +1,27 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import SelectTestnetRPC from './SelectTestnetRPC'
+import SelectMainnetRPC from './SelectMainnetRPC'
 import { Network } from '@invariant-labs/vara-sdk'
 import { RpcStatus } from '@store/reducers/connection'
 
 const meta = {
   title: 'Modals/SelectRPC',
-  component: SelectTestnetRPC,
+  component: SelectMainnetRPC,
   args: {
-    activeRPC: 'https://testnet-mock.com',
+    activeRPC: 'https://mainnet-mock.com',
     anchorEl: null,
     handleClose: () => {},
     networks: [
       {
-        networkType: Network.Testnet,
-        rpc: 'https://testnet-mock.com',
-        rpcName: 'Testnet'
+        networkType: Network.Mainnet,
+        rpc: 'https://mainnet-mock.com',
+        rpcName: 'Mainnet'
       }
     ],
     onSelect: () => {},
     open: true,
     rpcStatus: RpcStatus.Uninitialized
   }
-} satisfies Meta<typeof SelectTestnetRPC>
+} satisfies Meta<typeof SelectMainnetRPC>
 
 export default meta
 type Story = StoryObj<typeof meta>

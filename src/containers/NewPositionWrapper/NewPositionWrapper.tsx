@@ -25,16 +25,19 @@ import {
   getMockedTokenPrice,
   getNewTokenOrThrow,
   poolKeyToString,
-  printBigint
+  printBigint,
+  tickerToAddress
 } from '@utils/utils'
 import { actions as poolsActions } from '@store/reducers/pools'
 import { actions, InitMidPrice, actions as positionsActions } from '@store/reducers/positions'
 import { actions as snackbarsActions } from '@store/reducers/snackbars'
-import { Status, actions as walletActions } from '@store/reducers/wallet'
+import { actions as walletActions } from '@store/reducers/wallet'
 import { networkType } from '@store/selectors/connection'
 import {
   isLoadingLatestPoolsForTransaction,
   isLoadingTicksAndTickMaps,
+  isLoadingTokens,
+  isLoadingTokensError,
   poolKeys,
   pools,
   poolsArraySortedByFees
@@ -47,6 +50,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import apiSingleton from '@store/services/apiSingleton'
 import vftSingleton from '@store/services/vftSingleton'
+import { useNavigate } from 'react-router-dom'
+import { decodeAddress } from '@gear-js/api'
 
 export interface IProps {
   initialTokenFrom: string
@@ -60,13 +65,15 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   initialFee
 }) => {
   const dispatch = useDispatch()
+  const walletAddress = useSelector(hexAddress)
+  const varaBalance = useSelector(balance)
+  const tokens = useSelector(poolTokens)
   const walletStatus = useSelector(status)
   const allPools = useSelector(poolsArraySortedByFees)
   const allPoolKeys = useSelector(poolKeys)
   const poolsData = useSelector(pools)
   const loadingTicksAndTickMaps = useSelector(isLoadingTicksAndTickMaps)
   const isBalanceLoading = useSelector(balanceLoading)
-  const varaBalance = useSelector(balance)
   const shouldNotUpdatePriceRange = useSelector(shouldNotUpdateRange)
   const network = useSelector(networkType)
 
@@ -83,8 +90,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
 
   const isFetchingNewPool = useSelector(isLoadingLatestPoolsForTransaction)
   const currentNetwork = useSelector(networkType)
-  const walletAddress = useSelector(hexAddress)
-  const tokens = useSelector(poolTokens)
+
   const [poolIndex, setPoolIndex] = useState<number | null>(null)
 
   const [poolKey, setPoolKey] = useState<string>('')
@@ -100,6 +106,37 @@ export const NewPositionWrapper: React.FC<IProps> = ({
   const [isGetLiquidityError, setIsGetLiquidityError] = useState(false)
 
   const isMountedRef = useRef(false)
+  const navigate = useNavigate()
+  const isCurrentlyLoadingTokens = useSelector(isLoadingTokens)
+  const isCurrentlyLoadingTokensError = useSelector(isLoadingTokensError)
+
+  useEffect(() => {
+    const tokensToFetch: HexString[] = []
+
+    if (initialTokenFrom && !tokens[decodeAddress(tickerToAddress(network, initialTokenFrom))]) {
+      tokensToFetch.push(decodeAddress(tickerToAddress(network, initialTokenFrom)))
+    }
+
+    if (initialTokenTo && !tokens[decodeAddress(tickerToAddress(network, initialTokenTo))]) {
+      tokensToFetch.push(decodeAddress(tickerToAddress(network, initialTokenTo)))
+    }
+
+    if (tokensToFetch.length) {
+      dispatch(poolsActions.getTokens(tokensToFetch))
+    } else {
+      dispatch(poolsActions.addTokens({}))
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isCurrentlyLoadingTokensError) {
+      if (tokens[tickerToAddress(network, initialTokenFrom)]) {
+        navigate(`/newPosition/${initialTokenFrom}/${initialFee}`)
+      } else if (tokens[tickerToAddress(network, initialTokenTo)]) {
+        navigate(`/newPosition/${initialTokenTo}/${initialTokenTo}/${initialFee}`)
+      }
+    }
+  }, [isCurrentlyLoadingTokensError])
 
   useEffect(() => {
     dispatch(poolsActions.getPoolKeys())
@@ -140,26 +177,6 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       clearTimeout(timeoutId2)
     }
   }, [success, inProgress])
-
-  useEffect(() => {
-    if (
-      success &&
-      poolKey !== '' &&
-      tokenA !== null &&
-      tokenB !== null &&
-      poolIndex !== null &&
-      !loadingTicksAndTickMaps
-    ) {
-      dispatch(
-        positionsActions.getCurrentPlotTicks({
-          poolKey: allPoolKeys[poolKey],
-          isXtoY:
-            allPools[poolIndex].poolKey.tokenX === (currentPairReversed === true ? tokenB : tokenA),
-          disableLoading: true
-        })
-      )
-    }
-  }, [success, poolKey, tokenA, tokenB, poolIndex, loadingTicksAndTickMaps])
 
   const isXtoY = useMemo(() => {
     if (tokenA !== null && tokenB !== null) {
@@ -237,18 +254,20 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       })
 
       setPoolIndex(index !== -1 ? index : null)
-
-      if (poolKey !== '') {
-        dispatch(
-          positionsActions.getCurrentPlotTicks({
-            poolKey: allPoolKeys[poolKey],
-            isXtoY,
-            fetchTicksAndTickmap: true
-          })
-        )
-      }
     }
-  }, [isWaitingForNewPool, tokenA, tokenB, feeIndex, poolKey, walletStatus, allPoolKeys, allPools])
+  }, [isWaitingForNewPool, tokenA, tokenB, feeIndex, poolKey, allPoolKeys, allPools.length])
+
+  useEffect(() => {
+    if (poolKey !== '') {
+      dispatch(
+        positionsActions.getCurrentPlotTicks({
+          poolKey: allPoolKeys[poolKey],
+          isXtoY,
+          fetchTicksAndTickmap: true
+        })
+      )
+    }
+  }, [isWaitingForNewPool, tokenA, tokenB, poolKey, allPoolKeys])
 
   useEffect(() => {
     if (poolsData[poolKey]) {
@@ -435,7 +454,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       }
     } catch (error) {
       setIsGetLiquidityError(true)
-      return U128MAX
+      return printBigint(U128MAX, tokens[tokenA].decimals)
     }
 
     try {
@@ -454,7 +473,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       return tokenXAmount
     } catch (error) {
       setIsGetLiquidityError(true)
-      return U128MAX
+      return printBigint(U128MAX, tokens[tokenB].decimals)
     }
 
     return BigInt(0)
@@ -640,14 +659,6 @@ export const NewPositionWrapper: React.FC<IProps> = ({
           })
         )
       }}
-      showNoConnected={walletStatus !== Status.Initialized}
-      noConnectedBlockerProps={{
-        onConnect: async () => {
-          await openWalletSelectorModal()
-          dispatch(walletActions.connect(false))
-        },
-        descCustomText: 'Cannot add any liquidity.'
-      }}
       poolKey={poolKey}
       onRefresh={onRefresh}
       isBalanceLoading={isBalanceLoading}
@@ -657,7 +668,16 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       onlyUserPositions={onlyUserPositions}
       setOnlyUserPositions={setOnlyUserPositions}
       network={network}
+      isLoadingTokens={isCurrentlyLoadingTokens}
       varaBalance={varaBalance}
+      walletStatus={walletStatus}
+      onConnectWallet={async () => {
+        await openWalletSelectorModal()
+        dispatch(walletActions.connect(false))
+      }}
+      onDisconnectWallet={() => {
+        dispatch(walletActions.disconnect())
+      }}
     />
   )
 }
