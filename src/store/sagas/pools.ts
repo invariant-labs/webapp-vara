@@ -145,7 +145,7 @@ export function* fetchTokens(poolsWithPoolKeys: PoolWithPoolKey[]) {
     unknownTokensData: call(getTokenDataByAddresses, [...unknownTokens], vft, walletAddress),
     knownTokenBalances: call(getTokenBalances, [...knownTokens], vft, walletAddress, network)
   })
-  console.log('unknownTokensData', unknownTokensData)
+
   yield* put(actions.addTokens(unknownTokensData))
   yield* put(
     walletActions.addTokenBalances(
