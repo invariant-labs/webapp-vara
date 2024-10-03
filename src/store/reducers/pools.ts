@@ -1,5 +1,5 @@
 import { FeeTier, HexString, Network, Pool, PoolKey, Tick, Tickmap } from '@invariant-labs/vara-sdk'
-import { Liquidity } from '@invariant-labs/vara-sdk/target/schema'
+import { LiquidityTick } from '@invariant-labs/vara-sdk/target/schema'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import {
   BTC_ADDRESS,
@@ -16,12 +16,6 @@ import { PayloadType, Token } from '@store/consts/types'
 import { poolKeyToString } from '@utils/utils'
 
 import * as R from 'remeda'
-
-export interface LiquidityTick {
-  index: bigint
-  liquidityChange: Liquidity
-  sign: boolean
-}
 
 export interface PoolWithPoolKey extends Pool {
   poolKey: PoolKey
@@ -77,6 +71,7 @@ export interface FetchTicksAndTickMaps {
   tokenFrom: HexString
   tokenTo: HexString
   allPools: PoolWithPoolKey[]
+  poolKey?: PoolKey
 }
 
 const network =
