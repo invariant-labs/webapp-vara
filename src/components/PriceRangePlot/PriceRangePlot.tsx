@@ -171,12 +171,12 @@ export const PriceRangePlot: React.FC<IPriceRangePlot> = ({
     if (!rangeData.length) {
       rangeData.push({
         x: Math.max(leftRange.x, plotMin),
-        y: data[lessThan - 1].y
+        y: data[lessThan ? lessThan - 1 : 0].y
       })
 
       rangeData.push({
         x: Math.min(rightRange.x, plotMax),
-        y: data[lessThan - 1].y
+        y: data[lessThan ? lessThan - 1 : 0].y
       })
     } else {
       if (rangeData[0].x > leftRange.x) {

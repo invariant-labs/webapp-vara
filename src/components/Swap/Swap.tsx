@@ -756,7 +756,7 @@ export const Swap: React.FC<ISwap> = ({
 
                   onSwap(
                     simulateResult.poolKey,
-                    BigInt((+slippTolerance * Number(PERCENTAGE_DENOMINATOR)) / 100),
+                    BigInt(Math.round((+slippTolerance * Number(PERCENTAGE_DENOMINATOR)) / 100)),
                     simulateResult.targetSqrtPrice,
                     tokenFrom,
                     tokenTo,
@@ -785,7 +785,7 @@ export const Swap: React.FC<ISwap> = ({
 
               onSwap(
                 simulateResult.poolKey,
-                BigInt((+slippTolerance * Number(PERCENTAGE_DENOMINATOR)) / 100),
+                BigInt(Math.round((+slippTolerance * Number(PERCENTAGE_DENOMINATOR)) / 100)),
                 simulateResult.targetSqrtPrice,
                 tokenFrom,
                 tokenTo,
