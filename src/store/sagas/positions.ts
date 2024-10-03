@@ -405,7 +405,8 @@ export function* handleGetCurrentPlotTicks(action: PayloadAction<GetCurrentTicks
         payload: {
           tokenFrom: allTokens[poolKey.tokenX].address,
           tokenTo: allTokens[poolKey.tokenY].address,
-          allPools
+          allPools,
+          poolKey
         }
       }
 
@@ -444,7 +445,7 @@ export function* handleGetCurrentPlotTicks(action: PayloadAction<GetCurrentTicks
           )
         : createLiquidityPlot(allRawTicks, poolKey.feeTier.tickSpacing, isXtoY, xDecimal, yDecimal)
 
-    yield* call(handleGetRemainingPositions)
+    yield* put(actions.getRemainingPositions({ setLoaded: false }))
     const { list } = yield* select(positionsList)
     const userRawTicks = getLiquidityTicksByPositionsList(poolKey, list)
 
@@ -750,7 +751,9 @@ export function* handleClosePosition(action: PayloadAction<ClosePositionData>) {
   }
 }
 
-export function* handleGetRemainingPositions(): Generator {
+export function* handleGetRemainingPositions(
+  action: PayloadAction<{ setLoaded: boolean }>
+): Generator {
   const walletAddress = yield* select(hexAddress)
   const { length, list, loadedPages } = yield* select(positionsList)
 
@@ -777,7 +780,7 @@ export function* handleGetRemainingPositions(): Generator {
   yield* put(
     actions.setPositionsListLoadedStatus({
       indexes: pages.map(({ index }: { index: number }) => index),
-      isLoaded: true
+      isLoaded: action.payload.setLoaded
     })
   )
 }
@@ -785,7 +788,6 @@ export function* handleGetRemainingPositions(): Generator {
 export function* handleGetPositionsListPage(
   action: PayloadAction<{ index: number; refresh: boolean }>
 ) {
-  console.log('start handleGetPositionsListPage')
   const { index, refresh } = action.payload
 
   const walletAddress = yield* select(hexAddress)
@@ -821,7 +823,7 @@ export function* handleGetPositionsListPage(
       poolKey: entry[0].poolKey,
       ...entry[1]
     }))
-    console.log(poolsWithPoolKeys)
+
     yield* put(
       poolsActions.addPoolsForList({ data: poolsWithPoolKeys, listType: ListType.POSITIONS })
     )
