@@ -77,6 +77,7 @@ export interface FetchTicksAndTickMaps {
   tokenFrom: HexString
   tokenTo: HexString
   allPools: PoolWithPoolKey[]
+  poolKey?: PoolKey
 }
 
 const network =
