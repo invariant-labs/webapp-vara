@@ -426,7 +426,7 @@ export const getTokenBalances = async (
   tokensWithoutVara.map((token, index) => {
     tokenBalances.push([token, results[index]])
   })
-  console.log('token, ', tokenBalances)
+
   return tokenBalances
 }
 
