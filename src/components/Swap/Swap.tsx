@@ -361,7 +361,7 @@ export const Swap: React.FC<ISwap> = ({
     if (
       tokenFrom !== null &&
       convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom]?.decimals ?? 0n)) !== 0n &&
-      simulateResult.errors.every(error => error === SwapError.Unknown)
+      amountTo === ''
     ) {
       return 'Not enough liquidity'
     }
