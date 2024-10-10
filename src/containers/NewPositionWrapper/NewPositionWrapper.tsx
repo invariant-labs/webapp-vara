@@ -11,7 +11,7 @@ import { PERCENTAGE_SCALE } from '@invariant-labs/vara-sdk/target/consts'
 import {
   ALL_FEE_TIERS_DATA,
   DEFAULT_NEW_POSITION_SLIPPAGE,
-  U128MAX,
+  MAX,
   bestTiers,
   commonTokensForNetworks
 } from '@store/consts/static'
@@ -464,7 +464,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       }
     } catch (error) {
       setIsGetLiquidityError(true)
-      return printBigint(U128MAX, tokens[tokenA].decimals)
+      return printBigint(MAX, tokens[tokenA].decimals)
     }
 
     try {
@@ -483,7 +483,7 @@ export const NewPositionWrapper: React.FC<IProps> = ({
       return tokenXAmount
     } catch (error) {
       setIsGetLiquidityError(true)
-      return printBigint(U128MAX, tokens[tokenB].decimals)
+      return printBigint(MAX, tokens[tokenB].decimals)
     }
 
     return BigInt(0)

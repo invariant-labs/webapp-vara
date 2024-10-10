@@ -12,6 +12,7 @@ import SwapArrows from '@static/svg/swap-arrows.svg'
 import {
   DEFAULT_TOKEN_DECIMAL,
   EXTRA_BALANCE_TO_DEPOSIT_VARA,
+  MAX,
   REFRESHER_INTERVAL,
   SWAP_SAFE_TRANSACTION_FEE
 } from '@store/consts/static'
@@ -361,7 +362,7 @@ export const Swap: React.FC<ISwap> = ({
     if (
       tokenFrom !== null &&
       convertBalanceToBigint(amountFrom, Number(tokens[tokenFrom]?.decimals ?? 0n)) !== 0n &&
-      isError(SwapError.Unknown)
+      (amountFrom.replace('.', '') == MAX.toString() || amountTo === '')
     ) {
       return 'Not enough liquidity'
     }
