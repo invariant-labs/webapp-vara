@@ -15,7 +15,7 @@ import {
   DEPOSIT_VARA_SAFE_GAS_AMOUNT,
   ErrorMessage,
   EXTRA_BALANCE_TO_DEPOSIT_VARA,
-  U128MAX,
+  MAX,
   SWAP_GAS_AMOUNT
 } from '@store/consts/static'
 import { actions as walletActions } from '@store/reducers/wallet'
@@ -377,7 +377,7 @@ export function* handleGetSimulateResult(action: PayloadAction<Simulate>) {
     }
 
     let poolKey = null
-    let amountOut = byAmountIn ? 0n : U128MAX
+    let amountOut = byAmountIn ? 0n : MAX
     let insufficientLiquidityAmountOut = 0n
     let priceImpact = 0
     let targetSqrtPrice = 0n
