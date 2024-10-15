@@ -311,7 +311,7 @@ export const Swap: React.FC<ISwap> = ({
   const isInsufficientLiquidityError = useMemo(
     () =>
       simulateResult.poolKey === null &&
-      (isError(SwapError.InsufficientLiquidity) || isError(SwapError.MaxTicksCrossed)),
+      (isError(SwapError.InsufficientLiquidity) || isError(SwapError.MaxSwapStepsReached)),
     [simulateResult]
   )
 

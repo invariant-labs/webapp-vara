@@ -19,6 +19,7 @@
     "@emotion/styled": "^11.11.5",
     "@gear-js/api": "0.38.1",
     "@invariant-labs/vara-sdk": "^0.1.20",
+    "@invariant-labs/vara-sdk-wasm": "^0.1.17",
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
     "@nightlylabs/wallet-selector-polkadot": "^0.2.5",
