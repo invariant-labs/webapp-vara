@@ -3,9 +3,10 @@ import { colors, theme } from '@static/theme'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp'
 import { useStyles } from './style'
-import { Grid, Typography, useMediaQuery } from '@mui/material'
-import { formatNumbers, showPrefix } from '@utils/utils'
+import { Box, Grid, Typography, useMediaQuery } from '@mui/material'
+import { formatNumber, formatNumbers, showPrefix } from '@utils/utils'
 import { SortTypeTokenList } from '@store/consts/static'
+import icons from '@static/icons'
 
 interface IProps {
   displayType: string
@@ -20,6 +21,7 @@ interface IProps {
   sortType?: SortTypeTokenList
   onSort?: (type: SortTypeTokenList) => void
   hideBottomLine?: boolean
+  isUnknown?: boolean
 }
 
 const TokenListItem: React.FC<IProps> = ({
@@ -34,12 +36,13 @@ const TokenListItem: React.FC<IProps> = ({
   TVL = 0,
   sortType,
   onSort,
-  hideBottomLine = false
+  hideBottomLine = false,
+  isUnknown
 }) => {
   const { classes } = useStyles()
   // const isNegative = priceChange < 0
 
-  const isXDown = useMediaQuery(theme.breakpoints.down('sm'))
+  const isSm = useMediaQuery(theme.breakpoints.down('sm'))
   const hideName = useMediaQuery(theme.breakpoints.down('xs'))
 
   return (
@@ -49,15 +52,20 @@ const TokenListItem: React.FC<IProps> = ({
           container
           classes={{ container: classes.container, root: classes.tokenList }}
           style={hideBottomLine ? { border: 'none' } : undefined}>
-          {!hideName && <Typography component='p'>{itemNumber}</Typography>}
+          {!hideName && !isSm && <Typography component='p'>{itemNumber}</Typography>}
           <Grid className={classes.tokenName}>
-            {!isXDown && <img src={icon} alt='Token icon'></img>}
+            {!isSm && (
+              <Box className={classes.imageContainer}>
+                <img className={classes.tokenIcon} src={icon} alt='Token icon'></img>
+                {isUnknown && <img className={classes.warningIcon} src={icons.warningIcon} />}
+              </Box>
+            )}
             <Typography>
               {hideName ? symbol : name}
               {!hideName && <span className={classes.tokenSymbol}>{` (${symbol})`}</span>}
             </Typography>
           </Grid>
-          <Typography>{`~$${formatNumbers()(price.toString())}${showPrefix(price)}`}</Typography>
+          <Typography>{`~$${formatNumber(price)}`}</Typography>
           {/* {!hideName && (
             <Typography style={{ color: isNegative ? colors.invariant.Error : colors.green.main }}>
               {isNegative ? `${priceChange.toFixed(2)}%` : `+${priceChange.toFixed(2)}%`}
