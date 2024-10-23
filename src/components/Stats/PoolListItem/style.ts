@@ -23,29 +23,22 @@ export const useStyles = makeStyles()(() => ({
     },
 
     [theme.breakpoints.down('sm')]: {
+      gridTemplateColumns: '32.5% 17.5% 35% 15% ',
+
       '& p': {
+        justifyContent: 'flex-start',
         ...typography.caption1
       }
-    },
-
-    [theme.breakpoints.down('xs')]: {
-      gridTemplateColumns: '28% 15% 30% 25%'
     }
   },
 
   imageContainer: {
     display: 'flex',
-    alignItems: 'center',
-    '& img': {
-      minWidth: 28,
-      maxWidth: 28,
-      height: 28,
-      marginRight: 3,
-      borderRadius: '50%'
-    }
+    alignItems: 'center'
   },
 
   iconsWrapper: {
+    display: 'flex',
     height: 28
   },
 
@@ -72,8 +65,9 @@ export const useStyles = makeStyles()(() => ({
       display: 'block'
     },
 
-    [theme.breakpoints.down('xs')]: {
-      marginLeft: 0
+    [theme.breakpoints.down('sm')]: {
+      marginLeft: 0,
+      justifyContent: 'flex-start'
     }
   },
   icon: {
@@ -139,5 +133,26 @@ export const useStyles = makeStyles()(() => ({
         filter: 'none'
       }
     }
+  },
+  iconContainer: {
+    minWidth: 28,
+    maxWidth: 28,
+    height: 28,
+    marginRight: 3,
+    position: 'relative'
+  },
+  tokenIcon: {
+    minWidth: 28,
+    maxWidth: 28,
+    height: 28,
+    marginRight: 3,
+    borderRadius: '50%'
+  },
+  warningIcon: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    bottom: -6,
+    right: -6
   }
 }))

@@ -184,13 +184,7 @@ export const Header: React.FC<IHeader> = ({
                 rpcStatus={rpcStatus}
               />
             </Box>
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <SelectChainButton
-                activeChain={activeChain}
-                chains={CHAINS}
-                onSelect={onChainSelect}
-              />
-            </Box>
+
             <SelectNetworkButton
               name={typeOfNetwork}
               networks={[
@@ -209,6 +203,13 @@ export const Header: React.FC<IHeader> = ({
               ]}
               onSelect={onNetworkSelect}
             />
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+              <SelectChainButton
+                activeChain={activeChain}
+                chains={CHAINS}
+                onSelect={onChainSelect}
+              />
+            </Box>
           </Grid>
           <ChangeWalletButton
             name={
