@@ -79,7 +79,9 @@ const poolsList = Array(40)
       volume24: randomVolume24,
       tvl: randomTvl24,
       addressFrom: decodeAddress('5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA'),
-      addressTo: decodeAddress('5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA')
+      addressTo: decodeAddress('5Dvb5E8zKU4E9c7YxfNL5VC8YQj4VAFUTCGYY9ayFLnnY3UA'),
+      isUnknownFrom: true,
+      isUnknownTo: true
     }
   })
 
