@@ -63,9 +63,9 @@ const useStyles = makeStyles()(() => {
     },
 
     buttonRelease: {
-      background: `${colors.invariant.component} !important`,
+      background: `${colors.invariant.componentBcg} !important`,
       '&:hover': {
-        background: `${colors.invariant.component} !important`
+        background: `${colors.invariant.componentBcg} !important`
       }
     },
     background: {

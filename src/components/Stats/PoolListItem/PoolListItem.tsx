@@ -2,7 +2,7 @@ import React from 'react'
 import { theme } from '@static/theme'
 import { useStyles } from './style'
 import { Box, Grid, Typography, useMediaQuery } from '@mui/material'
-import { addressToTicker, formatNumbers, parseFeeToPathFee, showPrefix } from '@utils/utils'
+import { addressToTicker, formatNumber, parseFeeToPathFee } from '@utils/utils'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp'
 import { useNavigate } from 'react-router-dom'
@@ -33,6 +33,8 @@ interface IProps {
   //   accumulatedFarmsAvg: number
   //   accumulatedFarmsSingleTick: number
   // }
+  isUnknownFrom?: boolean
+  isUnknownTo?: boolean
 }
 
 const PoolListItem: React.FC<IProps> = ({
@@ -50,18 +52,20 @@ const PoolListItem: React.FC<IProps> = ({
   hideBottomLine = false,
   addressFrom,
   addressTo,
-  network
+  network,
   // apy = 0,
   // apyData = {
   //   fees: 0,
   //   accumulatedFarmsAvg: 0,
   //   accumulatedFarmsSingleTick: 0
   // }
+  isUnknownFrom,
+  isUnknownTo
 }) => {
   const { classes } = useStyles()
 
   const navigate = useNavigate()
-  const isXs = useMediaQuery(theme.breakpoints.down('xs'))
+  const isSm = useMediaQuery(theme.breakpoints.down('sm'))
 
   const handleOpenPosition = () => {
     navigate(
@@ -74,6 +78,7 @@ const PoolListItem: React.FC<IProps> = ({
       `/exchange/${addressToTicker(network ?? Network.Testnet, addressFrom ?? '')}/${addressToTicker(network ?? Network.Testnet, addressTo ?? '')}`
     )
   }
+
   return (
     <Grid maxWidth='100%'>
       {displayType === 'token' ? (
@@ -81,12 +86,18 @@ const PoolListItem: React.FC<IProps> = ({
           container
           classes={{ container: classes.container }}
           style={hideBottomLine ? { border: 'none' } : undefined}>
-          {!isXs ? <Typography>{tokenIndex}</Typography> : null}
+          {!isSm ? <Typography>{tokenIndex}</Typography> : null}
           <Grid className={classes.imageContainer}>
-            {!isXs && (
+            {!isSm && (
               <Box className={classes.iconsWrapper}>
-                <img src={iconFrom} alt='Token from' />
-                <img src={iconTo} alt='Token to' />
+                <Box className={classes.iconContainer}>
+                  <img className={classes.tokenIcon} src={iconFrom} alt='Token from' />
+                  {isUnknownFrom && <img className={classes.warningIcon} src={icons.warningIcon} />}
+                </Box>
+                <Box className={classes.iconContainer}>
+                  <img className={classes.tokenIcon} src={iconTo} alt='Token to' />
+                  {isUnknownTo && <img className={classes.warningIcon} src={icons.warningIcon} />}
+                </Box>
               </Box>
             )}
             <Grid className={classes.symbolsContainer}>
@@ -95,7 +106,7 @@ const PoolListItem: React.FC<IProps> = ({
               </Typography>
             </Grid>
           </Grid>
-          {/* {!isXs ? (
+          {/* {!isSm ? (
             <Typography>
               {`${apy > 1000 ? '>1000' : apy.toFixed(2)}%`}
               <Tooltip
@@ -136,24 +147,26 @@ const PoolListItem: React.FC<IProps> = ({
             </Typography>
           ) : null} */}
           <Typography>{fee}%</Typography>
-          <Typography>{`$${formatNumbers()(volume.toString())}${showPrefix(volume)}`}</Typography>
-          <Typography>{`$${formatNumbers()(TVL.toString())}${showPrefix(TVL)}`}</Typography>
-          <Box className={classes.action}>
-            <TooltipHover text='Exchange'>
-              <button className={classes.actionButton} onClick={handleOpenSwap}>
-                <img width={32} height={32} src={icons.horizontalSwapIcon} alt={'Exchange'} />
-              </button>
-            </TooltipHover>
-            <TooltipHover text='Add position'>
-              <button className={classes.actionButton} onClick={handleOpenPosition}>
-                <img width={32} height={32} src={icons.plusIcon} alt={'Open'} />
-              </button>
-            </TooltipHover>
-          </Box>
+          <Typography>{`$${formatNumber(volume)}`}</Typography>
+          <Typography>{`$${formatNumber(TVL)}`}</Typography>
+          {!isSm && (
+            <Box className={classes.action}>
+              <TooltipHover text='Exchange'>
+                <button className={classes.actionButton} onClick={handleOpenSwap}>
+                  <img width={32} height={32} src={icons.horizontalSwapIcon} alt={'Exchange'} />
+                </button>
+              </TooltipHover>
+              <TooltipHover text='Add position'>
+                <button className={classes.actionButton} onClick={handleOpenPosition}>
+                  <img width={32} height={32} src={icons.plusIcon} alt={'Open'} />
+                </button>
+              </TooltipHover>
+            </Box>
+          )}
         </Grid>
       ) : (
         <Grid container classes={{ container: classes.container, root: classes.header }}>
-          {!isXs && (
+          {!isSm && (
             <Typography style={{ lineHeight: '11px' }}>
               N<sup>o</sup>
             </Typography>
@@ -240,7 +253,7 @@ const PoolListItem: React.FC<IProps> = ({
               <ArrowDropDownIcon className={classes.icon} />
             ) : null}
           </Typography>
-          <Typography align='right'>Action</Typography>
+          {!isSm && <Typography align='right'>Action</Typography>}
         </Grid>
       )}
     </Grid>

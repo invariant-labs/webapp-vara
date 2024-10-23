@@ -12,14 +12,10 @@ export const useStyles = makeStyles()((theme: Theme) => ({
     whiteSpace: 'nowrap',
 
     [theme.breakpoints.down('sm')]: {
-      gridTemplateColumns: '5% 35% 15% 17.5% 16.5% 15%',
+      gridTemplateColumns: '30% 22.5% 32.5% 15%',
       '& p': {
-        ...typography.caption2
+        ...typography.caption1
       }
-    },
-
-    [theme.breakpoints.down('xs')]: {
-      gridTemplateColumns: '15% 25% 35% 25%'
     }
   },
 
@@ -60,14 +56,6 @@ export const useStyles = makeStyles()((theme: Theme) => ({
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       textOverflow: 'ellipsis'
-    },
-
-    '& img': {
-      minWidth: 28,
-      maxWidth: 28,
-      height: 28,
-      marginRight: 8,
-      borderRadius: '50%'
     }
   },
 
@@ -79,5 +67,28 @@ export const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down('sm')]: {
       marginLeft: -4
     }
+  },
+  imageContainer: {
+    minWidth: 28,
+    maxWidth: 28,
+    height: 28,
+    marginRight: 8,
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  tokenIcon: {
+    minWidth: 28,
+    maxWidth: 28,
+    height: 28,
+    marginRight: 8,
+    borderRadius: '50%'
+  },
+  warningIcon: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    bottom: -6,
+    right: -6
   }
 }))
